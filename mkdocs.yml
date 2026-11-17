@@ -1,0 +1,75 @@
+site_name: qcstore
+site_url: https://qcstore.docs.afh.org/
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: amber
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: amber
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github-alt
+
+repo_url: https://github.com/atomsforhumanity/qcstore
+edit_uri: edit/main/docs/
+site_author: Colton Hicks
+plugins:
+  - search
+  - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            separate_signature: true
+            show_bases: false
+            show_root_heading: true
+            show_symbol_type_heading: true
+            merge_init_into_class: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            show_if_no_docstring: false
+            docstring_options:
+              ignore_init_summary: true
+            filters: ["!^_"]
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.snippets
+  - pymdownx.extra
+
+watch:
+  - src/qcstore
+  - docs
+  - README.md
+
+nav:
+  - Home: index.md
+  - Design: design.md
+  - API:
+      - Store: api/store.md
+      - Index: api/sqlite.md
+      - Verify: api/verify.md
+      - Backends: api/backends.md
+  - Changelog: https://github.com/atomsforhumanity/qcstore/blob/main/CHANGELOG.md
