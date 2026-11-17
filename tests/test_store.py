@@ -14,7 +14,7 @@ from qcdata import (
 from qcstore import Store
 from qcstore.store import _key_dir
 from tests import outputs
-from tests.outputs import XTB, unmarked
+from tests.outputs import XTB, ran, unmarked
 
 
 @pytest.fixture
@@ -36,7 +36,7 @@ def key_dir(store: Store, key: str) -> Path:
 def test_get_returns_what_was_put(store, make):
     output = make()
     identities = {"files": "1"} if make is outputs.files_output else {"any": "1"}
-    store.put(output, identities)
+    store.put(ran(output, identities))
     key = store.key(output.input_data)
     assert unmarked(store.get(key)) == output
     assert unmarked(store.get(key, identities)) == output
@@ -49,8 +49,8 @@ def test_the_key_is_qcdatas(store):
 
 def test_get_marks_where_it_read_from(store):
     key = store.key(outputs.energy_input())
-    first = store.put(outputs.energy(), XTB)
-    second = store.put(outputs.energy(success=False), {"xtb": "6.8.0"})
+    first = store.put(ran(outputs.energy(), XTB))
+    second = store.put(ran(outputs.energy(success=False), {"xtb": "6.8.0"}))
     assert store.get(key).execution.store_run == f"{key}/{first}"
     assert store.get(key, {"xtb": "6.8.0"}).execution.store_run == f"{key}/{second}"
     assert store.get(key, blobs=False).execution.store_run == f"{key}/{first}"
@@ -59,9 +59,9 @@ def test_get_marks_where_it_read_from(store):
 
 def test_put_never_stores_where_an_output_was_read_from(store):
     key = store.key(outputs.energy_input())
-    store.put(outputs.energy(), XTB)
+    store.put(ran(outputs.energy(), XTB))
     read = store.get(key)
-    again = store.put(read, XTB)  # an output read from a store, stored again
+    again = store.put(ran(read, XTB))  # an output read from a store, stored again
     frames = [Frame.from_output(read), Frame.from_output(read)]
     assert frames[0].execution.store_run == read.execution.store_run
     optimization = ProgramOutput(
@@ -74,7 +74,7 @@ def test_put_never_stores_where_an_output_was_read_from(store):
         results=OptimizationData(provenance={"program": "xtb"}, frames=frames),
         success=True,
     )
-    store.put(optimization, XTB)
+    store.put(ran(optimization, XTB))
     for record in store.backend.root.rglob("record.json"):  # type: ignore[attr-defined]
         assert b"store_run" not in record.read_bytes()
     assert store.get(key).execution.store_run == f"{key}/{again}"
@@ -86,7 +86,7 @@ def test_put_never_stores_where_an_output_was_read_from(store):
 
 def test_get_without_blobs_leaves_logs_and_files_out(store):
     output = outputs.optimization()
-    store.put(output, {"qcopt": "0.3.0", "xtb": "6.7.1"})
+    store.put(ran(output, {"qcopt": "0.3.0", "xtb": "6.7.1"}))
     got = store.get(store.key(output.input_data), blobs=False)
     assert got.logs is None and got.results.files == {} and got.input_data.files == {}
     assert all(frame.logs is None for frame in got.results.frames)
@@ -106,7 +106,7 @@ def test_keys_are_checked(store):
 
 def test_put_returns_the_run_id_and_runs_lists_it(store):
     output = outputs.energy()
-    run = store.put(output, XTB, meta={"campaign": "demo", "n": 3})
+    run = store.put(ran(output, XTB), meta={"campaign": "demo", "n": 3})
     [listed] = store.runs(store.key(output.input_data))
     assert listed.id == run and listed.success and listed.error_kind is None
     assert listed.identities == XTB and listed.meta == {"campaign": "demo", "n": 3}
@@ -122,45 +122,59 @@ def test_put_returns_the_run_id_and_runs_lists_it(store):
 
 def test_put_refuses_a_warm_started_frame(store):
     with pytest.raises(ValueError, match="warm_start"):
-        store.put(outputs.energy(record={"warm_start": True}), XTB)
-    store.put(outputs.energy(record={"warm_start": False}), XTB)
+        store.put(ran(outputs.energy(record={"warm_start": True}), XTB))
+    store.put(ran(outputs.energy(record={"warm_start": False}), XTB))
 
 
-def test_identities_are_strings_to_strings(store):
-    with pytest.raises(TypeError, match="strings to strings"):
-        store.put(outputs.energy(), {"xtb": 8})  # type: ignore[dict-item]
-    with pytest.raises(TypeError, match="strings to strings"):
-        store.get(store.key(outputs.energy_input()), ["xtb"])  # type: ignore[arg-type]
-    # The runner's identities, whatever programs they name, are recorded as given.
-    run = store.put(outputs.energy(), {"xtb": "6.7.1", "xtb-params": "gfn2-2024"})
+def test_identities_come_from_the_output(store):
     key = store.key(outputs.energy_input())
-    assert store.runs(key)[0].identities == {"xtb": "6.7.1", "xtb-params": "gfn2-2024"}
-    assert store.runs(key)[0].id == run
+    with pytest.raises(ValueError, match="execution.identities is empty"):
+        store.put(outputs.energy())
+    assert store.runs(key) == []
+    with pytest.raises(TypeError, match="strings to strings"):
+        store.get(key, ["xtb"])  # type: ignore[arg-type]
+    # The runner's identities, whatever programs they name, are kept as given, with
+    # the output: get says which code made what it returns.
+    identities = {"xtb": "6.7.1", "xtb-params": "gfn2-2024"}
+    run = store.put(ran(outputs.energy(), identities))
+    [listed] = store.runs(key)
+    assert (listed.id, listed.identities) == (run, identities)
+    assert store.get(key).execution.identities == identities
     assert store.get(key, {"xtb": "6.7.1"}) is None
-    store.put(outputs.energy(), {})
-    assert store.get(key, {}).success
+    record = json.loads((key_dir(store, key) / run / "record.json").read_text())
+    assert record["format"] == 2 and "identities" not in record
+    assert record["output"]["execution"]["identities"] == identities
+
+
+def test_get_without_identities_returns_the_latest_run_whatever_its_code(store):
+    key = store.key(outputs.energy_input())
+    store.put(ran(outputs.energy(), {"xtb": "sha256:95d8"}))
+    store.put(ran(outputs.energy(), {"xtb": "sha256:1b4e"}))
+    assert store.get(key).execution.identities == {"xtb": "sha256:1b4e"}
+    older = store.get(key, {"xtb": "sha256:95d8"})
+    assert older.execution.identities == {"xtb": "sha256:95d8"}
 
 
 def test_meta_must_be_json(store):
     with pytest.raises(ValueError, match="meta must be JSON"):
-        store.put(outputs.energy(), XTB, meta={"x": object()})
+        store.put(ran(outputs.energy(), XTB), meta={"x": object()})
     with pytest.raises(ValueError, match="meta must be JSON"):
-        store.put(outputs.energy(), XTB, meta={"x": float("nan")})
+        store.put(ran(outputs.energy(), XTB), meta={"x": float("nan")})
 
 
 # ---------------------------------------------------------------- preference
 
 
 def test_the_latest_success_is_preferred_over_a_later_failure(store):
-    ok = store.put(outputs.energy(), XTB)
-    store.put(outputs.energy(success=False), XTB)
+    ok = store.put(ran(outputs.energy(), XTB))
+    store.put(ran(outputs.energy(success=False), XTB))
     key = store.key(outputs.energy_input())
     assert store.get(key).success
     assert [r.id for r in store.runs(key)][0] == ok
 
 
 def test_a_failure_is_returned_when_nothing_succeeded(store):
-    store.put(outputs.energy(success=False), XTB)
+    store.put(ran(outputs.energy(success=False), XTB))
     got = store.get(store.key(outputs.energy_input()))
     assert not got.success and got.error.kind == "convergence"
     assert got.logs == "iteration 1\niteration 2\n"
@@ -168,8 +182,8 @@ def test_a_failure_is_returned_when_nothing_succeeded(store):
 
 def test_identities_select_runs(store):
     key = store.key(outputs.energy_input())
-    old = store.put(outputs.energy(), {"xtb": "6.7.1"})
-    store.put(outputs.energy(success=False), {"xtb": "6.8.0"})
+    old = store.put(ran(outputs.energy(), {"xtb": "6.7.1"}))
+    store.put(ran(outputs.energy(success=False), {"xtb": "6.8.0"}))
     assert store.get(key, {"xtb": "6.7.1"}).success
     assert not store.get(key, {"xtb": "6.8.0"}).success
     assert store.get(key, {"xtb": "6.9.0"}) is None
@@ -184,8 +198,8 @@ def test_identities_select_runs(store):
 
 def test_withdrawn_runs_are_never_preferred(store):
     key = store.key(outputs.energy_input())
-    first = store.put(outputs.energy(), XTB)
-    second = store.put(outputs.energy(), XTB)
+    first = store.put(ran(outputs.energy(), XTB))
+    second = store.put(ran(outputs.energy(), XTB))
     store.withdraw(key, second, "wrong charge")
     assert [r.id for r in store.runs(key)] == [first, second]
     assert store.runs(key)[1].withdrawn.reason == "wrong charge"
@@ -199,7 +213,7 @@ def test_withdrawn_runs_are_never_preferred(store):
 
 
 def test_withdraw_needs_a_complete_run(store):
-    store.put(outputs.energy(), XTB)
+    store.put(ran(outputs.energy(), XTB))
     key = store.key(outputs.energy_input())
     with pytest.raises(KeyError):
         store.withdraw(key, "20260101T000000.000000Z-00000000", "no such run")
@@ -207,7 +221,7 @@ def test_withdraw_needs_a_complete_run(store):
 
 def test_carry_makes_a_run_valid_for_new_identities(store):
     key = store.key(outputs.energy_input())
-    run = store.put(outputs.energy(), {"xtb": "6.7.1"})
+    run = store.put(ran(outputs.energy(), {"xtb": "6.7.1"}))
     assert store.get(key, {"xtb": "6.8.0"}) is None
     evidence = {"compared": "energy", "max_abs_difference": 0.0}
     carry = store.carry([(key, run)], {"xtb": "6.8.0"}, evidence)
@@ -222,7 +236,7 @@ def test_carry_makes_a_run_valid_for_new_identities(store):
     assert sorted(json.dumps(c.evidence) for c in carries) == sorted(
         json.dumps(e) for e in (evidence, {"other": "evidence"})
     )
-    newer = store.put(outputs.energy(), {"xtb": "6.8.0"})
+    newer = store.put(ran(outputs.energy(), {"xtb": "6.8.0"}))
     pointer = json.loads((key_dir(store, key) / "current.json").read_text())
     assert {"identities": {"xtb": "6.8.0"}, "preferred": newer} in pointer[
         "by_identities"
@@ -231,8 +245,8 @@ def test_carry_makes_a_run_valid_for_new_identities(store):
 
 def test_a_bulk_carry_writes_its_evidence_once(store):
     root = store.backend.root  # type: ignore[attr-defined]
-    runs = [store.put(outputs.energy(i), XTB) for i in range(20)]
-    runs += [store.put(outputs.energy(i, success=False), XTB) for i in range(5)]
+    runs = [store.put(ran(outputs.energy(i), XTB)) for i in range(20)]
+    runs += [store.put(ran(outputs.energy(i, success=False), XTB)) for i in range(5)]
     pairs = [(key, run.id) for key in store.iter() for run in store.runs(key)]
     assert sorted(r for _, r in pairs) == sorted(runs)
     new = {"xtb": "6.8.0"}
@@ -251,7 +265,7 @@ def test_a_bulk_carry_writes_its_evidence_once(store):
 
 def test_carry_is_checked(store):
     key = store.key(outputs.energy_input())
-    run = store.put(outputs.energy(), XTB)
+    run = store.put(ran(outputs.energy(), XTB))
     with pytest.raises(ValueError, match="at least one"):
         store.carry([], {"xtb": "6.8.0"}, {})
     with pytest.raises(ValueError, match="evidence must be JSON"):
@@ -270,7 +284,7 @@ def test_carry_is_checked(store):
 
 def test_blob_reads_one_log_or_file(store):
     output = outputs.optimization()
-    run = store.put(output, {"qcopt": "0.3.0", "xtb": "6.7.1"})
+    run = store.put(ran(output, {"qcopt": "0.3.0", "xtb": "6.7.1"}))
     key = store.key(output.input_data)
     assert store.blob(key, "logs") == b"converged in 3 steps\n"
     assert store.blob(key, "results.frames.2.logs", run) == b"gradient 2\n"
@@ -289,7 +303,7 @@ def test_blob_reads_one_log_or_file(store):
 
 def test_blobs_are_checked_on_load(store):
     output = outputs.energy()
-    run = store.put(output, XTB)
+    run = store.put(ran(output, XTB))
     key = store.key(output.input_data)
     (key_dir(store, key) / run / "blobs" / "output.logs").write_text("tampered")
     with pytest.raises(ValueError, match="sha256"):
@@ -302,7 +316,7 @@ def test_blobs_are_checked_on_load(store):
 
 def test_the_layout_is_plain_json(store):
     output = outputs.hessian()
-    run = store.put(output, XTB, tags=["screen"])
+    run = store.put(ran(output, XTB), tags=["screen"])
     key = store.key(output.input_data)
     directory = key_dir(store, key)
     # No colon in any name: the key's version and hash are directories.
@@ -322,12 +336,12 @@ def test_the_layout_is_plain_json(store):
         "format",
         "key",
         "run",
-        "identities",
         "meta",
         "blobs",
         "output",
     ]
-    assert (record["format"], record["key"], record["run"]) == (1, key, run)
+    assert (record["format"], record["key"], record["run"]) == (2, key, run)
+    assert record["output"]["execution"]["identities"] == XTB
     assert record["output"]["results"]["energy"] == -100.0
     assert "logs" not in record["output"]
     assert (
@@ -341,11 +355,13 @@ def test_the_layout_is_plain_json(store):
 
 def test_records_of_another_format_are_refused(store):
     output = outputs.energy()
-    run = store.put(output, XTB)
+    run = store.put(ran(output, XTB))
     key = store.key(output.input_data)
     path = key_dir(store, key) / run / "record.json"
-    path.write_text(path.read_text().replace('"format": 1', '"format": 2'))
-    with pytest.raises(ValueError, match="record format 2"):
+    path.write_text(path.read_text().replace('"format": 2', '"format": 1'))
+    with pytest.raises(
+        ValueError, match="record format 1; this qcstore reads format 2"
+    ):
         store.get(key)
 
 
@@ -358,9 +374,9 @@ def test_a_run_without_its_record_is_ignored(store):
     assert store.runs(new) == [] and list(store.iter()) == []
     assert store.get(new) is None
     key = store.key(outputs.energy_input())
-    run = store.put(outputs.energy(), XTB)
+    run = store.put(ran(outputs.energy(), XTB))
     (key_dir(store, key) / unfinished / "blobs").mkdir(parents=True)
-    store.put(outputs.energy(success=False), XTB)
+    store.put(ran(outputs.energy(success=False), XTB))
     assert [r.id for r in store.runs(key)][0] == run and len(store.runs(key)) == 2
     assert store.get(key).success
     with pytest.raises(KeyError):
@@ -373,7 +389,7 @@ def test_a_run_without_its_record_is_ignored(store):
 def test_tags(store):
     output = outputs.energy()
     key = store.key(output.input_data)
-    store.put(output, XTB, tags=["b", "a"])
+    store.put(ran(output, XTB), tags=["b", "a"])
     store.tag(key, "c", "a")
     store.untag(key, "b", "never-set")
     assert sorted(p.name for p in (key_dir(store, key) / "tags").iterdir()) == [
@@ -386,7 +402,7 @@ def test_tags(store):
         with pytest.raises(ValueError, match="A tag is"):
             store.tag(key, bad)
     with pytest.raises(TypeError):
-        store.put(output, XTB, tags="screen")
+        store.put(ran(output, XTB), tags="screen")
     with pytest.raises(KeyError):
         store.tag(store.key(outputs.energy_input(9)), "a")
 
@@ -394,7 +410,7 @@ def test_tags(store):
 def test_iter_lists_every_key_with_a_run(store):
     keys = {store.key(outputs.energy_input(i)) for i in range(5)}
     for i in range(5):
-        store.put(outputs.energy(i), XTB)
+        store.put(ran(outputs.energy(i), XTB))
     assert set(store.iter()) == keys
     assert list(store.iter()) == sorted(keys)
 
@@ -404,8 +420,8 @@ def test_iter_lists_every_key_with_a_run(store):
 
 def test_copy_to_copies_runs_unchanged(store, tmp_path):
     key = store.key(outputs.energy_input())
-    first = store.put(outputs.energy(), XTB, tags=["t"], meta={"m": 1})
-    store.put(outputs.energy(1), XTB)
+    first = store.put(ran(outputs.energy(), XTB), tags=["t"], meta={"m": 1})
+    store.put(ran(outputs.energy(1), XTB))
     other = Store(tmp_path / "other")
     assert store.copy_to(other, [key]) == 1
     assert list(other.iter()) == [key]
@@ -416,7 +432,7 @@ def test_copy_to_copies_runs_unchanged(store, tmp_path):
     assert source.read_bytes() == copied.read_bytes()
     # Runs it has are skipped; withdrawals and carries follow.
     store.withdraw(key, first, "bad")
-    second = store.put(outputs.energy(), XTB)
+    second = store.put(ran(outputs.energy(), XTB))
     store.carry([(key, second)], {"xtb": "6.8.0"}, {"why": "same"})
     assert store.copy_to(other) == 2
     assert other.runs(key) == store.runs(key)

@@ -10,6 +10,7 @@ from pathlib import Path
 
 from qcstore import LocalBackend, Store
 from tests import outputs
+from tests.outputs import ran
 
 #: Numerics a writer may report for xtb: runs of one key under several identities.
 VERSIONS = ["6.7.1", "6.8.0"]
@@ -33,7 +34,7 @@ def mixed(root: str, worker: int, keys: int, steps: int, report: str) -> None:
             output = outputs.energy(i, success=rng.random() < 0.7)
             tags = [f"w{worker}"] if rng.random() < 0.5 else []
             mine.append(
-                store.put(output, {"xtb": version}, tags=tags, meta={"w": worker})
+                store.put(ran(output, {"xtb": version}), tags=tags, meta={"w": worker})
             )
         elif action < 0.7:
             store.withdraw(key, rng.choice(runs).id, f"by writer {worker}")
@@ -55,7 +56,7 @@ def forever(root: str, worker: int, keys: int) -> None:
     while True:
         i = rng.randrange(keys)
         output = outputs.energy(i, success=rng.random() < 0.7)
-        run = store.put(output, {"xtb": rng.choice(VERSIONS)}, tags=[f"w{worker}"])
+        run = store.put(ran(output, {"xtb": rng.choice(VERSIONS)}), tags=[f"w{worker}"])
         if rng.random() < 0.2:
             store.withdraw(store.key(output.input_data), run, "test")
         if rng.random() < 0.2:
@@ -82,7 +83,7 @@ class Dying(LocalBackend):
 
 def die_while_putting(root: str, point: str, i: int) -> None:
     """Put one energy of molecule ``i``, killed at ``point``: a file name or "done"."""
-    Store(Dying(root, point)).put(outputs.energy(i), {"xtb": "6.8.0"})
+    Store(Dying(root, point)).put(ran(outputs.energy(i), {"xtb": "6.8.0"}))
 
 
 def die_while_withdrawing(root: str, key: str, run: str) -> None:

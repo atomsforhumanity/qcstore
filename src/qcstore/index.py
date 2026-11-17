@@ -342,7 +342,7 @@ def _row(key: str, run: _RunFiles, preferred: str | None) -> dict[str, Any]:
         "success": output["success"],
         "error_kind": (output.get("error") or {}).get("kind"),
         "wall_time": execution.get("wall_time"),
-        "identities": _canonical(run.record["identities"]),
+        "identities": _canonical(run.identities),
         "withdrawn": run.withdrawn is not None,
         "preferred": run.id == preferred,
         "input": json.dumps(inp, ensure_ascii=False),

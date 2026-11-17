@@ -8,7 +8,7 @@ import pytest
 from qcstore import Index, Store
 from qcstore.store import _key_dir
 from tests import outputs
-from tests.outputs import XTB
+from tests.outputs import XTB, ran
 
 TABLES = {
     "runs": "key, run",
@@ -38,17 +38,18 @@ def store(tmp_path: Path) -> Store:
 def fill(store: Store) -> dict[str, str]:
     """A store with successes, failures, withdrawals, carries, tags and meta."""
     runs = {}
-    runs["ok"] = store.put(outputs.energy(), XTB, tags=["screen"], meta={"batch": 1})
-    runs["failed"] = store.put(outputs.energy(1, success=False), {"xtb": "6.8.0"})
+    runs["ok"] = store.put(
+        ran(outputs.energy(), XTB), tags=["screen"], meta={"batch": 1}
+    )
+    runs["failed"] = store.put(ran(outputs.energy(1, success=False), {"xtb": "6.8.0"}))
     runs["opt"] = store.put(
-        outputs.optimization(),
-        {"qcopt": "0.3.0", "xtb": "6.7.1"},
+        ran(outputs.optimization(), {"qcopt": "0.3.0", "xtb": "6.7.1"}),
         tags=["screen", "opt"],
         meta={"note": "first", "flags": [1, 2], "ok": True},
     )
-    runs["files"] = store.put(outputs.files_output(), {"orca": "6.0.1"})
+    runs["files"] = store.put(ran(outputs.files_output(), {"orca": "6.0.1"}))
     key = store.key(outputs.energy_input())
-    runs["second"] = store.put(outputs.energy(), XTB)
+    runs["second"] = store.put(ran(outputs.energy(), XTB))
     store.withdraw(key, runs["second"], "duplicate")
     runs["carry"] = store.carry(
         [(key, runs["ok"])], {"xtb": "6.8.0"}, {"max_abs_difference": 0.0}
@@ -150,9 +151,9 @@ def test_meta_and_tags_tables(store):
 
 def test_calculations_per_molecule(store):
     for i in range(3):
-        store.put(outputs.energy(i), XTB)
-    store.put(outputs.energy(0), XTB)
-    store.put(outputs.hessian(), XTB)
+        store.put(ran(outputs.energy(i), XTB))
+    store.put(ran(outputs.energy(0), XTB))
+    store.put(ran(outputs.hessian(), XTB))
     rows = store.index().sql(
         "SELECT formula, COUNT(DISTINCT key) AS calculations, COUNT(*) AS runs "
         "FROM runs GROUP BY formula ORDER BY formula"
@@ -178,9 +179,9 @@ def test_update_reads_only_new_lines_and_matches_a_rebuild(store, tmp_path):
     key = store.key(outputs.energy_input())
     store.withdraw(key, runs["ok"], "late doubts")
     store.tag(key, "late")
-    store.put(outputs.energy(2), XTB)
+    store.put(ran(outputs.energy(2), XTB))
     other = Store(tmp_path / "other")
-    other.put(outputs.energy(3), XTB)
+    other.put(ran(outputs.energy(3), XTB))
     other.copy_to(store)
     index.update()
     assert contents(index) == rebuilt(store, tmp_path)
@@ -195,7 +196,7 @@ def test_update_reads_only_new_lines_and_matches_a_rebuild(store, tmp_path):
 
 def test_a_change_whose_writer_died_is_reread_on_every_update(store, tmp_path):
     """A begin line with no done line: the key stays pending, re-read each update."""
-    store.put(outputs.energy(), XTB)
+    store.put(ran(outputs.energy(), XTB))
     index = store.index()
     key = store.key(outputs.energy_input())
     tags = store.backend.root / _key_dir(key) / "tags"  # type: ignore[attr-defined]
@@ -218,7 +219,7 @@ def test_a_change_whose_writer_died_is_reread_on_every_update(store, tmp_path):
 
 
 def test_a_line_being_written_waits(store):
-    store.put(outputs.energy(), XTB)
+    store.put(ran(outputs.energy(), XTB))
     index = store.index()
     key = store.key(outputs.energy_input(1))
     store.backend.append(
@@ -234,7 +235,7 @@ def test_a_line_being_written_waits(store):
 
 
 def test_a_malformed_line_is_skipped(store):
-    store.put(outputs.energy(), XTB)
+    store.put(ran(outputs.energy(), XTB))
     store.index()
     store.backend.append("journals/w/b.jsonl", b"not json\n")
     with pytest.warns(UserWarning, match="malformed"):

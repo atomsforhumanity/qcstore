@@ -40,7 +40,8 @@ def verify(store: Store, *, repair: bool = False) -> Report:
 
     For each complete run: its record names its key and run, its output loads (every
     blob and array file matching its sha256), the key recomputed from its input is the
-    key it is filed under, and each of its carries' files matches its sha256. For each
+    key it is filed under, its output names its identities, and each of its carries'
+    files matches its sha256. For each
     key: ``current.json`` names the runs the rules prefer.
 
     Args:
@@ -77,6 +78,8 @@ def verify(store: Store, *, repair: bool = False) -> Report:
                 output = store._load(key, run.id, blobs=True)
                 if store.key(output.input_data) != key:
                     raise ValueError("its input's key is not the key it is filed under")
+                if not output.execution.identities:
+                    raise ValueError("its output has no identities")
             except Exception as e:
                 report.problems.append(f"{where}: {e}")
         if not runs:

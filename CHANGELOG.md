@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [unreleased]
 
+### Changed
+
+- `put(output, tags=(), meta=None)` reads the identities from the output, `output.execution.identities` (qcdata's new field, set by the runner on every output), and stores them with it; the `identities` parameter is gone. An output without identities is refused.
+- Record format 2: a run's identities live only in its output; `runs()`, the pointer and the index read them there. Records of format 1 are refused.
+- The docs say plainly that `get(key)` without identities returns the latest run whatever code made it; the output's `execution.identities` or `get(key, identities)` tells which.
+
 ## [0.1.0a2] - 2026-11-17
 
 ### Changed

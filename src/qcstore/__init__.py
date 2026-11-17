@@ -4,7 +4,7 @@
 from qcstore import Store
 
 store = Store("./store")
-run = store.put(output, {"tblite": "tblite 0.8.0"}, tags=["screen"])
+run = store.put(output, tags=["screen"])  # identities: output.execution.identities
 same = store.get(store.key(output.input_data), {"tblite": "tblite 0.8.0"})
 ```
 """

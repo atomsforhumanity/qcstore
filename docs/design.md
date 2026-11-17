@@ -13,16 +13,21 @@ A stored result answers two questions, kept apart:
   holding keys (reaction networks, campaign lists, tags) stays valid across releases.
 - **Which code produced the numbers?** The *numerics identity* of each program the
   input names, `{program: numerics}`: a string that changes whenever results for an
-  unchanged input may change. The caller supplies it to `put` (qccompute's runner
-  asks each program), and every run records it. A Python library's is its name and
+  unchanged input may change. qccompute's runner asks each program and sets the
+  result on every output it returns, `execution.identities`; `put` files the run
+  under them and stores them with the output, and refuses an output without them. A Python library's is its name and
   version (`{"tblite": "tblite 0.8.0"}`), an external executable's the sha256 of the
   file (`{"xtb": "sha256:9c1f…"}`), a program with numerics epochs its epoch, an ML
   potential its model's checksum. qcstore only compares them as strings.
 
 A reader asks for a calculation and, optionally, for identities. `get(key)` returns the
-latest success whatever produced it; `get(key, {"tblite": "tblite 0.9.0"})` only a run produced by
-exactly those identities, or *carried* to them: marked valid for them, with the evidence,
-after a release that changed no results for it.
+latest run (the latest success, else the latest failure) *whatever code made it*: the
+returned output's `execution.identities` says which.
+`get(key, {"tblite": "tblite 0.9.0"})` returns only a run produced by exactly those
+identities, or *carried* to them: marked valid for them, with the evidence, after a
+release that changed no results for it. A carried run keeps the identities that
+produced it. `runs()`, the pointer and the index all read a run's identities from the
+same place, its output.
 
 Each run also records the environment it ran in, as its output reports it
 (`execution`: host name, CPU model, GPU devices, libc version). Lookups match on
@@ -36,7 +41,7 @@ records/k1/<2 hex>/<64 hex>/
     current.json                    the preferred run, overall and per identity set
     tags/<tag>                      an empty file per tag on the key
     <run>/
-        record.json                 identities, meta, and the output
+        record.json                 meta and the output, identities included
         blobs/<path>                logs, files and large arrays, named by JSON path
         withdrawn.json              only if withdrawn: by, time, reason
         carries/<id>                an empty marker per carry of the run
@@ -55,17 +60,19 @@ directories sort by time.
 
 ```json
 {
-  "format": 1,
+  "format": 2,
   "key": "k1:3f9a...",
   "run": "20261117T101500.123456Z-7c1e9a0b",
-  "identities": {"tblite": "tblite 0.8.0"},
   "meta": {"campaign": "screen-1"},
   "blobs": {
     "output.logs": {"sha256": "e3bf..."},
     "output.results.files.orca%2Egbw": {"sha256": "06eb...", "binary": true},
     "output.results.hessian.npy": {"sha256": "56a4..."}
   },
-  "output": {"success": true, "input_data": {...}, "results": {...}, ...}
+  "output": {
+    "success": true, "input_data": {...}, "results": {...},
+    "execution": {"identities": {"tblite": "tblite 0.8.0"}, ...}, ...
+  }
 }
 ```
 

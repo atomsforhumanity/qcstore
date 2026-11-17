@@ -158,6 +158,14 @@ def files_output() -> ProgramOutput:
 
 
 def unmarked(output: ProgramOutput) -> ProgramOutput:
-    """The output without the mark of the store it was read from."""
-    execution = output.execution.model_copy(update={"store_run": None})
+    """The output as the program returned it: no identities, no store's mark."""
+    execution = output.execution.model_copy(
+        update={"store_run": None, "identities": {}}
+    )
+    return output.model_copy(update={"execution": execution})
+
+
+def ran(output: ProgramOutput, identities: dict[str, str]) -> ProgramOutput:
+    """The output as a runner returns it: with the identities of the code that ran."""
+    execution = output.execution.model_copy(update={"identities": identities})
     return output.model_copy(update={"execution": execution})

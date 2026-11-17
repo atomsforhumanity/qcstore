@@ -11,7 +11,7 @@ import pytest
 from qcstore import Store, verify
 from qcstore.store import _key_dir, _pointer
 from tests import outputs, writers
-from tests.outputs import unmarked
+from tests.outputs import ran, unmarked
 from tests.test_index import contents, rebuilt
 
 spawn = multiprocessing.get_context("spawn")
@@ -64,7 +64,7 @@ def test_many_writers_on_the_same_and_different_keys(tmp_path):
 def test_a_writer_killed_at_each_step(tmp_path, point):
     root = str(tmp_path / "store")
     store = Store(root)
-    first = store.put(outputs.energy(), {"xtb": "6.7.1"})
+    first = store.put(ran(outputs.energy(), {"xtb": "6.7.1"}))
     index = store.index()
     key = store.key(outputs.energy_input())
 
@@ -113,8 +113,8 @@ def test_a_withdrawal_holds_even_if_its_writer_dies_before_the_pointer(tmp_path)
     root = str(tmp_path / "store")
     store = Store(root)
     key = store.key(outputs.energy_input())
-    older = store.put(outputs.energy(), {"xtb": "6.7.1"})
-    newer = store.put(outputs.energy(), {"xtb": "6.7.1"})
+    older = store.put(ran(outputs.energy(), {"xtb": "6.7.1"}))
+    newer = store.put(ran(outputs.energy(), {"xtb": "6.7.1"}))
     child = spawn.Process(target=writers.die_while_withdrawing, args=(root, key, newer))
     child.start()
     child.join()
@@ -177,7 +177,7 @@ def test_index_updates_from_several_processes(tmp_path):
     root = str(tmp_path / "store")
     store = Store(root)
     for i in range(3):
-        store.put(outputs.energy(i), {"xtb": "6.7.1"})
+        store.put(ran(outputs.energy(i), {"xtb": "6.7.1"}))
     path = tmp_path / "shared.sqlite"
     store.index(path)
     procs = [

@@ -2,16 +2,17 @@
 
 A calculation is named by its key, ``qcdata.calculation_key(inp)``: the input alone.
 Each time it runs, `Store.put` adds a run, which is never changed or deleted afterwards.
-A run records the numerics identities of the programs that produced it
-(``{"tblite": "tblite 0.8.0"}``), so readers can tell results of different code apart
-while the key stays the same across releases.
+A run keeps the numerics identities of the programs that produced it, which the runner
+sets on the output (``execution.identities``, such as ``{"tblite": "tblite 0.8.0"}``),
+so readers can tell results of different code apart while the key stays the same across
+releases.
 
 Layout (see ``docs/design.md``)::
 
     records/k1/<2 hex>/<64 hex>/        a key, k1:<64 hex>, as a path without a colon
         current.json                    the preferred run, overall and per identity set
         tags/<tag>                      an empty file per tag on the key
-        <run>/record.json               the run: identities, meta, and the output
+        <run>/record.json               the run: meta and the output
         <run>/blobs/<path>              logs, files and large arrays, named by JSON path
         <run>/withdrawn.json            only if withdrawn
         <run>/carries/<digest>          an empty file per carry of the run
@@ -62,8 +63,9 @@ if TYPE_CHECKING:
 
 __all__ = ["Carry", "Run", "Store", "Withdrawal"]
 
-#: The version of the record layout, written in every ``record.json``.
-FORMAT = 1
+#: The version of the record layout, written in every ``record.json``. Format 2 keeps
+#: a run's identities in its output (``execution.identities``) only.
+FORMAT = 2
 
 _KEY = re.compile(r"(k[0-9]+):([0-9a-f]{64})")
 _RUN = re.compile(r"[0-9]{8}T[0-9]{6}\.[0-9]{6}Z-[0-9a-f]{8}")
@@ -159,7 +161,14 @@ class _RunFiles:
     @property
     def valid_for(self) -> list[dict[str, str]]:
         """Every identity set the run's results are valid for: its own, then carried."""
-        return [self.record["identities"], *(c["identities"] for c in self.carries)]
+        return [self.identities, *(c["identities"] for c in self.carries)]
+
+    @property
+    def identities(self) -> dict[str, str]:
+        """The identities that produced the run: its output's, as the runner set them."""
+        execution = self.record["output"].get("execution") or {}
+        identities: dict[str, str] = execution.get("identities") or {}
+        return identities
 
 
 class Store:
@@ -168,7 +177,7 @@ class Store:
     Example:
         ```python
         store = Store("./store")
-        run = store.put(output, {"tblite": "tblite 0.8.0"}, tags=["screen"])
+        run = store.put(output, tags=["screen"])  # output.execution.identities
         store.get(store.key(inp), {"tblite": "tblite 0.8.0"})
         ```
 
@@ -214,8 +223,10 @@ class Store:
         """Return the preferred run's output, or None if there is none.
 
         The preferred run is the latest success not withdrawn, else the latest run not
-        withdrawn. With ``identities``, only runs produced by exactly those identities,
-        or carried to them, count.
+        withdrawn. Without ``identities`` that is the latest run whatever code made
+        it: the returned output's ``execution.identities`` says which. With
+        ``identities``, only runs produced by exactly those identities, or carried to
+        them, count. A carried run keeps the identities that produced it.
 
         Args:
             key: The calculation's key.
@@ -234,21 +245,20 @@ class Store:
     def put(
         self,
         output: Output,
-        identities: Identities,
         *,
         tags: Iterable[str] = (),
         meta: Mapping[str, Any] | None = None,
     ) -> str:
         """Add a run under the key of ``output.input_data``.
 
-        ``execution.store_run`` says where an output was read from, so it is never
-        stored, at any depth.
+        The run is filed under the identities of the code that produced it,
+        ``output.execution.identities`` (``{program: numerics}``), which the runner
+        sets on every output, and is found again under exactly these. They are stored
+        with the output. ``execution.store_run`` says where an output was read from,
+        so it is never stored, at any depth.
 
         Args:
-            output: The calculation's output, successful or not.
-            identities: The numerics identity of each program that ran,
-                ``{program: numerics}``, as the runner saw them; the run is found
-                again under exactly these.
+            output: The calculation's output, successful or not, with its identities.
             tags: Tags for the key.
             meta: JSON metadata stored with the run.
 
@@ -256,12 +266,17 @@ class Store:
             The new run's id.
 
         Raises:
-            ValueError: ``output`` is a session frame (``record.warm_start`` true): a
-                warm start can reach another solution than the input alone, so it is
-                not that input's result. Or a tag is invalid, or ``meta`` is not
-                JSON.
-            TypeError: ``identities`` are not strings to strings.
+            ValueError: ``output`` has no identities; or it is a session frame
+                (``record.warm_start`` true): a warm start can reach another solution
+                than the input alone, so it is not that input's result. Or a tag is
+                invalid, or ``meta`` is not JSON.
         """
+        if not output.execution.identities:
+            raise ValueError(
+                "This output does not say which code produced it: "
+                "output.execution.identities is empty. qccompute's runner sets it; "
+                "a store keeps only results whose code it can name."
+            )
         if output.record.get("warm_start") is True:
             raise ValueError(
                 "This output started warm from a session's history (record.warm_start "
@@ -270,11 +285,10 @@ class Store:
             )
         inp = output.input_data
         key = self.key(inp)
-        identities = dict(sorted(_check_strings(identities).items()))
         tags = _check_tags(tags)
         meta = _json_object(meta or {}, "meta")
         run = _new_run_id()
-        files = _run_files(key, run, output, identities, meta)
+        files = _run_files(key, run, output, meta)
         with self._journal.op("put", key, run=run, tags=tags):
             self._write_run(key, run, files)
             for tag in tags:
@@ -699,7 +713,6 @@ def _run_files(
     key: str,
     run: str,
     output: Output,
-    identities: dict[str, str],
     meta: dict[str, Any],
 ) -> dict[str, bytes]:
     """A run's files, ``record.json`` last: the output split into record and blobs."""
@@ -711,7 +724,6 @@ def _run_files(
         "format": FORMAT,
         "key": key,
         "run": run,
-        "identities": identities,
         "meta": meta,
         "blobs": {},
         "output": document,
@@ -907,7 +919,7 @@ def _run(files: _RunFiles) -> Run:
         time=_run_time(files.id),
         success=output["success"],
         error_kind=(output.get("error") or {}).get("kind"),
-        identities=files.record["identities"],
+        identities=files.identities,
         carries=[
             Carry(c["id"], c["identities"], c["evidence"], c["by"], _time(c["time"]))
             for c in files.carries

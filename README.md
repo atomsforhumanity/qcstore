@@ -19,10 +19,11 @@ uv pip install --prerelease=allow "qcdata==0.24.0a2" "qccompute[qccodec]==0.23.0
 ## Five minutes
 
 A store files each calculation under its key, `qcdata.calculation_key(inp)`: the input
-alone. Each run also records the *numerics identity* of every program that produced it,
+alone. Each run also keeps the *numerics identity* of every program that produced it,
 so results of different code stay apart while the key stays the same across releases.
-With qccompute, the runner supplies the identities: it asks each program for a string
-that changes whenever its results may change. For a Python library that is its name and
+The runner sets the identities on every output it returns, `execution.identities`: it
+asks each program for a string that changes whenever its results may change, and `put`
+stores them with the run. For a Python library that is its name and
 version (`{"tblite": "tblite 0.8.0"}`); for an external executable, the sha256 of the
 file (`{"xtb": "sha256:9c1f…"}`); for a program with numerics epochs, the epoch.
 `qccompute.Runner().identities(inp)` shows them for an input.
@@ -45,19 +46,26 @@ output = ProgramOutput(
     results=SinglePointData(
         provenance={"program": "tblite", "program_version": "0.8.0"}, energy=-5.07
     ),
+    execution={"identities": {"tblite": "tblite 0.8.0"}},  # what the runner sets
 )
 
 store = Store("./store")
-tblite = {"tblite": "tblite 0.8.0"}
-run = store.put(output, tblite, tags=["demo"], meta={"by": "readme"})
+run = store.put(output, tags=["demo"], meta={"by": "readme"})
 
 key = store.key(inp)
-store.get(key)                     # the latest success, whatever produced it
+tblite = {"tblite": "tblite 0.8.0"}
 store.get(key, tblite)             # only a run of tblite 0.8.0
 store.get(key, {"tblite": "tblite 0.9.0"})   # None: never run with 0.9.0
+store.get(key)                     # the latest run, whatever code made it...
+store.get(key).execution.identities  # ...and which code that was
 store.blob(key, "logs")            # b"SCF converged in 9 iterations\n"
 store.get(key).execution.store_run # "k1:35a1.../20261117T...": read from this store
 ```
+
+`get(key)` without identities returns the latest run (the latest success, else the
+latest failure) whatever code made it, so two builds of one program can both be behind
+a key. Ask with identities, `get(key, identities)`, to get a run of that code, or read
+the returned output's `execution.identities` to see which code you got.
 
 A new release that gives the same results need not rerun anything: carry the runs to the
 new identities, with the evidence. The evidence is stored once, however many runs it
@@ -104,7 +112,7 @@ store/
     current.json                       the preferred run, overall and per identity set
     tags/demo                          an empty file per tag
     20261117T101500.123456Z-7c1e9a0b/  one directory per run, never changed
-      record.json                      identities, meta, and the output
+      record.json                      meta and the output, identities included
       blobs/output.logs                logs, files and large arrays, named by JSON path
       carries/9c1f...                  an empty marker per carry of this run
       withdrawn.json                   who withdrew it, when, and why

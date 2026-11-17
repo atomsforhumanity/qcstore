@@ -9,15 +9,15 @@ from qcstore import Store, verify
 from qcstore.__main__ import main
 from qcstore.store import _key_dir
 from tests import outputs
-from tests.outputs import XTB, unmarked
+from tests.outputs import XTB, ran, unmarked
 
 
 @pytest.fixture
 def store(tmp_path: Path) -> Store:
     store = Store(tmp_path / "store")
-    store.put(outputs.energy(), XTB)
-    store.put(outputs.hessian(), XTB)
-    store.put(outputs.optimization(), {"qcopt": "0.3.0", "xtb": "6.7.1"})
+    store.put(ran(outputs.energy(), XTB))
+    store.put(ran(outputs.hessian(), XTB))
+    store.put(ran(outputs.optimization(), {"qcopt": "0.3.0", "xtb": "6.7.1"}))
     return store
 
 
@@ -117,3 +117,12 @@ def test_strays_under_records_are_problems(store):
         f"records/k1/00/{'ff' * 32}: {rule}",
         f"records/k1/zz: {rule}",
     ]
+
+
+def test_a_record_without_identities_is_a_problem(store):
+    path = run_dir(store, outputs.energy()) / "record.json"
+    record = json.loads(path.read_text())
+    del record["output"]["execution"]["identities"]
+    path.write_text(json.dumps(record))
+    problems = verify(store).problems
+    assert any("its output has no identities" in p for p in problems)
