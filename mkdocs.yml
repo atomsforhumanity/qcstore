@@ -31,7 +31,7 @@ theme:
     repo: fontawesome/brands/github-alt
 
 repo_url: https://github.com/atomsforhumanity/qcstore
-edit_uri: edit/main/docs/
+edit_uri: edit/next/docs/
 site_author: Colton Hicks
 plugins:
   - search
@@ -76,4 +76,4 @@ nav:
       - Index: api/sqlite.md
       - Verify: api/verify.md
       - Backends: api/backends.md
-  - Changelog: https://github.com/atomsforhumanity/qcstore/blob/main/CHANGELOG.md
+  - Changelog: https://github.com/atomsforhumanity/qcstore/blob/next/CHANGELOG.md

@@ -27,7 +27,7 @@ classifiers = [
 Homepage = "https://github.com/atomsforhumanity/qcstore"
 Documentation = "https://qcstore.docs.afh.org"
 Source = "https://github.com/atomsforhumanity/qcstore"
-Changelog = "https://github.com/atomsforhumanity/qcstore/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/atomsforhumanity/qcstore/blob/next/CHANGELOG.md"
 "Bug Tracker" = "https://github.com/atomsforhumanity/qcstore/issues"
 
 [dependency-groups]
