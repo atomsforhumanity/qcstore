@@ -196,7 +196,7 @@ missing or lagging pointers and changes nothing else.
 ## Journals and the index
 
 The SQLite index answers questions across calculations ("how many calculations per
-molecule", "every result under linus epoch 8"). It is a cache, rebuildable from the
+molecule", "every result of tblite 0.8.0"). It is a cache, rebuildable from the
 runs, and optional: the store never needs it.
 
 Each writer process appends to its own journal, one file per store object, so no two
@@ -221,7 +221,7 @@ basis, formula, success, error kind, wall time, identities, withdrawn, preferred
 whole input as JSON, and the environment: host, CPU model, devices, libc), `carries` (one
 row per run carried, with the carry's id, identities and evidence), `tags` and `meta`.
 JSON columns are queried with
-SQLite's JSON functions: `json_extract(identities, '$.linus') = '8'`.
+SQLite's JSON functions: `json_extract(identities, '$.tblite') = '0.8.0'`.
 
 The index file lives in the store's directory by default. SQLite's locks need a local
 disk: for a store on NFS, keep the index on a local disk (`store.index(path)`).

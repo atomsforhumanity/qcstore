@@ -21,7 +21,7 @@ Tables:
   lists and objects as JSON).
 
 Query JSON columns with SQLite's JSON functions:
-``json_extract(identities, '$.linus') = '8'``, ``json_extract(input, '$.keywords.maxiter')``.
+``json_extract(identities, '$.tblite') = '0.8.0'``, ``json_extract(input, '$.keywords.maxiter')``.
 """
 
 from __future__ import annotations
@@ -153,8 +153,8 @@ class Index:
         Args:
             tag: Only calculations with this tag.
             identities: Only runs valid under these numerics, produced by them or
-                carried to them: ``{"linus": "8"}`` matches every run whose linus
-                numerics is 8, whatever its other programs'.
+                carried to them: ``{"tblite": "0.8.0"}`` matches every run whose
+                tblite numerics is 0.8.0, whatever its other programs'.
             **columns: Values of the ``runs`` columns (``program="xtb"``,
                 ``success=True``, ``preferred=True``); None matches NULL.
 
