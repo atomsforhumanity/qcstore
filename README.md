@@ -10,18 +10,18 @@ Python standard library.
 
 ## Install
 
-qcstore is in alpha. Install it pinned with qcdata (`--prerelease=allow` lets the
+qcstore is in alpha. Install it with qcdata, with minimum versions (`--prerelease=allow` lets the
 resolver take pre-releases):
 
 ```sh
-uv pip install --prerelease=allow "qcdata==0.24.0a6" "qcstore==0.1.0a4"
+uv pip install --prerelease=allow "qcdata>=0.24.0a8" "qcstore>=0.1.0a4"
 ```
 
 To cache calculations that qccompute runs, as at the end of the next section, add the
 runner and its external programs:
 
 ```sh
-uv pip install --prerelease=allow "qcdata==0.24.0a6" "qccompute[qccodec]==0.23.0a5" "qccodec==0.22.0a4" "qcstore==0.1.0a4"
+uv pip install --prerelease=allow "qcdata>=0.24.0a8" "qccompute[qccodec]>=0.23.0a6" "qccodec>=0.22.0a5" "qcstore>=0.1.0a4"
 ```
 
 ## Five minutes
