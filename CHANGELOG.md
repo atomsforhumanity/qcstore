@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [unreleased]
 
+## [0.1.0a4] - 2026-11-17
+
+### Added
+
+- `get(key, run=...)` returns one named run, given as its id or as the `"<key>/<run>"` of `execution.store_run`, whether it is preferred or not and withdrawn or not, so a result can be cited exactly.
+
+### Changed
+
+- The docs say that concurrent misses of one key each compute, and the store keeps every run.
+
+
 ## [0.1.0a3] - 2026-11-17
 
 ### Changed

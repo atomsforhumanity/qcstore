@@ -1,6 +1,6 @@
 [project]
 name = "qcstore"
-version = "0.1.0a3"
+version = "0.1.0a4"
 description = "A store for quantum chemistry results: plain JSON records, safe under concurrent writers."
 readme = "README.md"
 authors = [{ name = "Colton Hicks", email = "github@coltonhicks.com" }]
