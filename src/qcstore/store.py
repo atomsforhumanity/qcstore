@@ -14,7 +14,8 @@ Layout (see ``docs/design.md``)::
         <run>/record.json               the run: identities, meta, and the output
         <run>/blobs/<path>              logs, files and large arrays, named by JSON path
         <run>/withdrawn.json            only if withdrawn
-        <run>/carries/<digest>.json     one per identity set the run was carried to
+        <run>/carries/<digest>          an empty file per carry of the run
+    carries/<digest>.json               a carry: new identities and the evidence, once
     journals/<writer>/<batch>.jsonl     what each writer changed, for the index
 
 Concurrency without locks: a run is new files, ``record.json`` written last as its
@@ -83,15 +84,17 @@ class Withdrawal:
 
 @dataclass(frozen=True)
 class Carry:
-    """A run's results declared valid for other identities: new code, same numbers.
+    """Runs declared valid for other identities: new code, same results.
 
     Attributes:
-        identities: The identities the run is also valid for, ``{program: numerics}``.
+        id: The sha256 of the carry's file, ``carries/<id>.json``.
+        identities: The identities the runs are also valid for, ``{program: numerics}``.
         evidence: Why: what was compared, and how closely it agreed.
-        by: The user who carried it.
+        by: The user who carried them.
         time: When (UTC).
     """
 
+    id: str
     identities: dict[str, str]
     evidence: dict[str, Any]
     by: str
@@ -113,6 +116,9 @@ class Run:
         meta: What the writer stored with it.
         program_version: The program version its output reports.
         host: The machine it ran on, as its output reports.
+        cpu_model: The machine's CPU model, as its output reports.
+        devices: The GPU devices it ran with, as its output reports.
+        libc: The C library version it ran with, as its output reports.
     """
 
     id: str
@@ -125,6 +131,9 @@ class Run:
     meta: dict[str, Any]
     program_version: str | None
     host: str | None
+    cpu_model: str | None
+    devices: list[str]
+    libc: str | None
 
 
 @dataclass
@@ -254,7 +263,7 @@ class Store:
         with self._journal.op("put", key, run=run, tags=tags):
             self._write_run(key, run, files)
             for tag in tags:
-                self._add_tag(key, tag)
+                _put_once(self.backend, f"{_key_dir(key)}/tags/{tag}", b"")
             self._update_pointer(key)
         return run
 
@@ -296,56 +305,64 @@ class Store:
             KeyError: No such run.
         """
         run = self._run_id(key, run)
-        marker = {"by": _user(), "time": _now(), "reason": reason}
+        marker = _dumps({"by": _user(), "time": _now(), "reason": reason})
         with self._journal.op("withdraw", key, run=run):
-            _create(self.backend, f"{_run_dir(key, run)}/withdrawn.json", marker)
+            _put_once(self.backend, f"{_run_dir(key, run)}/withdrawn.json", marker)
             self._update_pointer(key)
 
     def carry(
         self,
-        key: str,
-        run: str,
+        runs: Iterable[tuple[str, str]],
         identities: Identities,
         evidence: Mapping[str, Any],
-    ) -> None:
-        """Mark a run as valid for other identities too, citing the evidence.
+    ) -> str:
+        """Declare runs valid for other identities too, citing the evidence once.
 
-        After a release that changes no numbers for a calculation, carrying its runs
-        to the new identities lets lookups under them reuse the runs. Nothing is
-        copied, and carrying a run to the same identities again keeps the first carry.
+        A carry asserts that each run's whole output, ``record`` included, is what the
+        code of the new identities would produce for its input, within the
+        calculation's accuracy. Carry after a release that changes no results, with
+        evidence that it does not (a benchmark rerun); a release that changes the shape
+        of ``record`` cannot be carried. Lookups under the new identities then reuse
+        the runs. Nothing is copied: the carry is one file, ``carries/<id>.json``, and
+        each run gets an empty marker naming it.
 
         Args:
-            key: The calculation's key.
-            run: The run.
-            identities: The identities it is also valid for: the same programs as its
-                own, with other numerics.
+            runs: ``(key, run)`` pairs: from `runs`, `iter`, or an index query.
+            identities: The identities the runs are also valid for.
             evidence: JSON: what was compared, and how closely it agreed.
 
+        Returns:
+            The carry's id: the sha256 of its file.
+
         Raises:
-            KeyError: No such run.
-            ValueError: ``identities`` name other programs than the run's, or are its
-                own; ``evidence`` is not JSON.
+            KeyError: A run that is not in the store; nothing is carried then.
+            ValueError: No runs, or ``evidence`` is not JSON.
+            TypeError: ``identities`` are not strings to strings.
         """
-        run = self._run_id(key, run)
         identities = dict(sorted(_check_strings(identities).items()))
-        own = _read_record(self.backend, _run_dir(key, run))
-        if set(identities) != set(own["identities"]):
-            raise ValueError(
-                f"Run {run} was produced by {sorted(own['identities'])}; carry it to "
-                f"identities of the same programs, not {sorted(identities)}."
-            )
-        if identities == own["identities"]:
-            raise ValueError(f"Run {run} was produced by {identities} already.")
-        marker = {
-            "identities": identities,
-            "evidence": _json_object(evidence, "evidence"),
-            "by": _user(),
-            "time": _now(),
-        }
-        name = _digest(_canonical(identities))[:16]
-        with self._journal.op("carry", key, run=run, identities=identities):
-            _create(self.backend, f"{_run_dir(key, run)}/carries/{name}.json", marker)
-            self._update_pointer(key)
+        by_key: dict[str, list[str]] = {}
+        for key, run in runs:
+            by_key.setdefault(key, []).append(self._run_id(key, run))
+        if not by_key:
+            raise ValueError("Name at least one (key, run) to carry.")
+        document = _dumps(
+            {
+                "identities": identities,
+                "evidence": _json_object(evidence, "evidence"),
+                "by": _user(),
+                "time": _now(),
+            }
+        )
+        carry = _digest(document)
+        _put_once(self.backend, f"carries/{carry}.json", document)
+        for key, key_runs in by_key.items():
+            with self._journal.op("carry", key, runs=key_runs, carry=carry):
+                for run in dict.fromkeys(key_runs):
+                    _put_once(
+                        self.backend, f"{_run_dir(key, run)}/carries/{carry}", b""
+                    )
+                self._update_pointer(key)
+        return carry
 
     def tag(self, key: str, *tags: str) -> None:
         """Add tags to a calculation; tags already there stay.
@@ -359,7 +376,7 @@ class Store:
             raise KeyError(f"No run of {key} in this store.")
         with self._journal.op("tag", key, tags=checked):
             for tag in checked:
-                self._add_tag(key, tag)
+                _put_once(self.backend, f"{_key_dir(key)}/tags/{tag}", b"")
 
     def untag(self, key: str, *tags: str) -> None:
         """Remove tags from a calculation; tags not there are ignored."""
@@ -397,7 +414,7 @@ class Store:
                 for run in runs:
                     copied += other._copy_run(self.backend, key, run)
                 for tag in tags:
-                    other._add_tag(key, tag)
+                    _put_once(other.backend, f"{_key_dir(key)}/tags/{tag}", b"")
                 other._update_pointer(key)
         return copied
 
@@ -445,23 +462,29 @@ class Store:
         )
 
     def _read_runs(
-        self, key: str, records: dict[str, dict[str, Any]] | None = None
+        self, key: str, cache: dict[str, Any] | None = None
     ) -> list[_RunFiles]:
-        """Read every complete run of a key: records (cached in ``records``), markers."""
-        records = {} if records is None else records
+        """Read every complete run of a key with its markers.
+
+        Args:
+            key: The key.
+            cache: Records and carries already read, by path; they never change.
+        """
+        cache = {} if cache is None else cache
         out = []
         for run in self._run_ids(key):
             directory = _run_dir(key, run)
-            if run not in records:
-                records[run] = _read_record(self.backend, directory)
+            if directory not in cache:
+                cache[directory] = _read_record(self.backend, directory)
             withdrawn = None
             if self.backend.exists(f"{directory}/withdrawn.json"):
                 withdrawn = _read_json(self.backend, f"{directory}/withdrawn.json")
-            carries = [
-                _read_json(self.backend, f"{directory}/carries/{name}")
-                for name in self.backend.list(f"{directory}/carries")
-            ]
-            out.append(_RunFiles(run, records[run], withdrawn, carries))
+            carries = []
+            for carry in self.backend.list(f"{directory}/carries"):
+                if carry not in cache:
+                    cache[carry] = _read_carry(self.backend, carry)
+                carries.append(cache[carry])
+            out.append(_RunFiles(run, cache[directory], withdrawn, carries))
         return out
 
     def _pointer_now(self, key: str) -> dict[str, Any] | None:
@@ -539,12 +562,6 @@ class Store:
         for name, data in files.items():
             self.backend.put(f"{_run_dir(key, run)}/{name}", data)
 
-    def _add_tag(self, key: str, tag: str) -> None:
-        try:
-            self.backend.put(f"{_key_dir(key)}/tags/{tag}", b"")
-        except FileExistsError:
-            pass
-
     def _copy_run(self, source: Backend, key: str, run: str) -> int:
         """Copy one run from another store's backend; return 1 if it was new."""
         directory = _run_dir(key, run)
@@ -556,17 +573,13 @@ class Store:
                 for name in json.loads(record)["blobs"]
             }
             self._write_run(key, run, {**files, "record.json": record})
-        markers = (
-            ["withdrawn.json"] if source.exists(f"{directory}/withdrawn.json") else []
-        )
-        markers += [f"carries/{n}" for n in source.list(f"{directory}/carries")]
-        for name in markers:
-            try:
-                self.backend.put(
-                    f"{directory}/{name}", source.get(f"{directory}/{name}")
-                )
-            except FileExistsError:
-                pass
+        if source.exists(f"{directory}/withdrawn.json"):
+            withdrawn = source.get(f"{directory}/withdrawn.json")
+            _put_once(self.backend, f"{directory}/withdrawn.json", withdrawn)
+        for carry in source.list(f"{directory}/carries"):
+            document = source.get(f"carries/{carry}.json")
+            _put_once(self.backend, f"carries/{carry}.json", document)
+            _put_once(self.backend, f"{directory}/carries/{carry}", b"")
         return int(new)
 
     def _update_pointer(self, key: str) -> None:
@@ -578,13 +591,13 @@ class Store:
         again until its pointer matches them. The last replacement then follows a
         reading of every run, so the pointer ends right.
         """
-        records: dict[str, dict[str, Any]] = {}
-        pointer = _pointer(self._read_runs(key, records))
+        cache: dict[str, Any] = {}
+        pointer = _pointer(self._read_runs(key, cache))
         while True:
             self.backend.put(
                 f"{_key_dir(key)}/current.json", _dumps(pointer), replace=True
             )
-            latest = _pointer(self._read_runs(key, records))
+            latest = _pointer(self._read_runs(key, cache))
             if latest == pointer:
                 return
             pointer = latest
@@ -658,10 +671,7 @@ def _run_files(
 ) -> dict[str, bytes]:
     """A run's files, ``record.json`` last: the output split into record and blobs."""
     with tempfile.TemporaryDirectory(prefix="qcstore-") as tmp:
-        # Lossless: fields set by mutation after construction are kept too.
-        saved = output.save(
-            Path(tmp) / "output.json", exclude_none=True, exclude_unset=False
-        )
+        saved = output.save(Path(tmp) / "output.json")
         document = json.loads(saved[0].read_text())
         arrays = {path.name: path.read_bytes() for path in saved[1:]}
     record: dict[str, Any] = {
@@ -790,6 +800,14 @@ def _read_json(backend: Backend, path: str) -> Any:
     return json.loads(backend.get(path))
 
 
+def _read_carry(backend: Backend, carry: str) -> dict[str, Any]:
+    """A carry's file, checked against its name, the sha256 of its bytes."""
+    data = backend.get(f"carries/{carry}.json")
+    if _digest(data) != carry:
+        raise ValueError(f"carries/{carry}.json does not match its sha256.")
+    return {"id": carry, **json.loads(data)}
+
+
 def _read_record(backend: Backend, directory: str) -> dict[str, Any]:
     """A run's ``record.json``, refused if another qcstore format wrote it."""
     record: dict[str, Any] = _read_json(backend, f"{directory}/record.json")
@@ -801,10 +819,10 @@ def _read_record(backend: Backend, directory: str) -> dict[str, Any]:
     return record
 
 
-def _create(backend: Backend, path: str, document: Any) -> None:
-    """Create a JSON marker; the first writer of a marker wins."""
+def _put_once(backend: Backend, path: str, data: bytes) -> None:
+    """Create a file that is never replaced; if it exists, the first one stands."""
     try:
-        backend.put(path, _dumps(document))
+        backend.put(path, data)
     except FileExistsError:
         pass
 
@@ -849,6 +867,7 @@ def _pointer(runs: list[_RunFiles]) -> dict[str, Any]:
 def _run(files: _RunFiles) -> Run:
     """A run as `Store.runs` shows it."""
     output = files.record["output"]
+    execution = output.get("execution") or {}
     withdrawn = files.withdrawn
     return Run(
         id=files.id,
@@ -857,7 +876,7 @@ def _run(files: _RunFiles) -> Run:
         error_kind=(output.get("error") or {}).get("kind"),
         identities=files.record["identities"],
         carries=[
-            Carry(c["identities"], c["evidence"], c["by"], _time(c["time"]))
+            Carry(c["id"], c["identities"], c["evidence"], c["by"], _time(c["time"]))
             for c in files.carries
         ],
         withdrawn=None
@@ -865,7 +884,10 @@ def _run(files: _RunFiles) -> Run:
         else Withdrawal(withdrawn["by"], _time(withdrawn["time"]), withdrawn["reason"]),
         meta=files.record["meta"],
         program_version=output["results"]["provenance"].get("program_version"),
-        host=output.get("execution", {}).get("hostname"),
+        host=execution.get("hostname"),
+        cpu_model=execution.get("cpu_model"),
+        devices=execution.get("devices", []),
+        libc=execution.get("libc"),
     )
 
 

@@ -57,7 +57,13 @@ def energy(i: int = 0, *, success: bool = True, **fields: Any) -> ProgramOutput:
         ),
         success=True,
         logs="normal termination of xtb\n",
-        execution={"hostname": "node1", "wall_time": 0.25},
+        execution={
+            "hostname": "node1",
+            "wall_time": 0.25,
+            "cpu_model": "AMD EPYC 9654",
+            "devices": ["NVIDIA H100"],
+            "libc": "glibc 2.39",
+        },
         **fields,
     )
 

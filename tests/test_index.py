@@ -11,7 +11,7 @@ from tests.outputs import XTB
 
 TABLES = {
     "runs": "key, run",
-    "carries": "key, run, identities",
+    "carries": "key, run, carry",
     "tags": "key, tag",
     "meta": "key, run, name",
 }
@@ -49,7 +49,9 @@ def fill(store: Store) -> dict[str, str]:
     key = store.key(outputs.energy_input())
     runs["second"] = store.put(outputs.energy(), XTB)
     store.withdraw(key, runs["second"], "duplicate")
-    store.carry(key, runs["ok"], {"xtb": "6.8.0"}, {"max_abs_difference": 0.0})
+    runs["carry"] = store.carry(
+        [(key, runs["ok"])], {"xtb": "6.8.0"}, {"max_abs_difference": 0.0}
+    )
     store.untag(store.key(outputs.optimization().input_data), "opt")
     return runs
 
@@ -78,6 +80,18 @@ def test_query(store, tmp_path):
         0.25,
     )
     assert ok["time"].endswith("Z") and ok["time"][:4] == runs["ok"][:4]
+    assert (ok["cpu_model"], ok["devices"], ok["libc"]) == (
+        "AMD EPYC 9654",
+        ["NVIDIA H100"],
+        "glibc 2.39",
+    )
+    on_h100 = index.sql(
+        "SELECT run FROM runs, json_each(runs.devices) WHERE json_each.value = ?",
+        ["NVIDIA H100"],
+    )
+    assert {r["run"] for r in on_h100} == {runs["ok"], runs["second"]}
+    assert [r["run"] for r in index.query(program="orca")][0] == runs["files"]
+    assert index.query(program="orca")[0]["devices"] == []
     [second] = index.query(run=runs["second"])
     assert second["withdrawn"] is True and second["preferred"] is False
     assert [r["run"] for r in index.query(success=False)] == [runs["failed"]]
@@ -122,9 +136,14 @@ def test_meta_and_tags_tables(store):
     assert index.sql("SELECT run FROM meta WHERE name = 'batch' AND value = 1") == [
         {"run": runs["ok"]}
     ]
-    carried = index.sql("SELECT identities, evidence FROM carries")
+    carried = index.sql("SELECT run, carry, identities, evidence FROM carries")
     assert carried == [
-        {"identities": '{"xtb":"6.8.0"}', "evidence": '{"max_abs_difference": 0.0}'}
+        {
+            "run": runs["ok"],
+            "carry": runs["carry"],
+            "identities": '{"xtb":"6.8.0"}',
+            "evidence": '{"max_abs_difference": 0.0}',
+        }
     ]
 
 

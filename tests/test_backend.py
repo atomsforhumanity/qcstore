@@ -54,7 +54,7 @@ def test_the_store_needs_only_the_backend_interface(tmp_path):
     key = store.key(hessian.input_data)
     assert store.get(key) == hessian
     assert store.get(store.key(optimization.input_data)) == optimization
-    store.carry(key, run, {"xtb": "6.8.0"}, {"why": "test"})
+    store.carry([(key, run)], {"xtb": "6.8.0"}, {"why": "test"})
     store.withdraw(key, run, "test")
     assert store.get(key) is None and len(store.runs(key)) == 1
     assert store.blob(key, "logs", run) == b"hessian done\n"

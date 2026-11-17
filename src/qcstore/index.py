@@ -10,10 +10,12 @@ Tables:
 
 - ``runs``: one row per run: ``key``, ``run``, ``time`` (UTC, ISO 8601), ``program``,
   ``version`` (as the output reports it), ``calctype``, ``method``, ``basis``,
-  ``formula``, ``success``, ``error_kind``, ``host``, ``wall_time`` (s), ``identities``
-  (JSON), ``withdrawn``, ``preferred`` (the run `Store.get` returns without
-  identities), and ``input`` (the input as JSON, files left out).
-- ``carries``: ``key``, ``run``, ``identities`` (JSON), ``evidence`` (JSON), ``time``.
+  ``formula``, ``success``, ``error_kind``, ``wall_time`` (s), ``identities`` (JSON),
+  ``withdrawn``, ``preferred`` (the run `Store.get` returns without identities),
+  ``input`` (the input as JSON, files left out), and the environment it ran in, as
+  its output reports it: ``host``, ``cpu_model``, ``devices`` (JSON list) and ``libc``.
+- ``carries``: ``key``, ``run``, ``carry`` (its id), ``identities`` (JSON),
+  ``evidence`` (JSON), ``time``: one row per run carried.
 - ``tags``: ``key``, ``tag``.
 - ``meta``: ``key``, ``run``, ``name``, ``value`` (strings and numbers as they are;
   lists and objects as JSON).
@@ -48,14 +50,15 @@ _TABLES = (
     """CREATE TABLE runs (
         key TEXT NOT NULL, run TEXT NOT NULL, time TEXT NOT NULL,
         program TEXT NOT NULL, version TEXT, calctype TEXT, method TEXT, basis TEXT,
-        formula TEXT, success INTEGER NOT NULL, error_kind TEXT, host TEXT,
-        wall_time REAL, identities TEXT NOT NULL, withdrawn INTEGER NOT NULL,
-        preferred INTEGER NOT NULL, input TEXT NOT NULL,
+        formula TEXT, success INTEGER NOT NULL, error_kind TEXT, wall_time REAL,
+        identities TEXT NOT NULL, withdrawn INTEGER NOT NULL,
+        preferred INTEGER NOT NULL, input TEXT NOT NULL, host TEXT, cpu_model TEXT,
+        devices TEXT NOT NULL, libc TEXT,
         PRIMARY KEY (key, run))""",
     """CREATE TABLE carries (
-        key TEXT NOT NULL, run TEXT NOT NULL, identities TEXT NOT NULL,
-        evidence TEXT NOT NULL, time TEXT NOT NULL,
-        PRIMARY KEY (key, run, identities))""",
+        key TEXT NOT NULL, run TEXT NOT NULL, carry TEXT NOT NULL,
+        identities TEXT NOT NULL, evidence TEXT NOT NULL, time TEXT NOT NULL,
+        PRIMARY KEY (key, run, carry))""",
     "CREATE TABLE tags (key TEXT NOT NULL, tag TEXT NOT NULL, PRIMARY KEY (key, tag))",
     """CREATE TABLE meta (
         key TEXT NOT NULL, run TEXT NOT NULL, name TEXT NOT NULL, value,
@@ -73,7 +76,7 @@ _TABLES = (
 _STORE_TABLES = ("runs", "carries", "tags", "meta")
 _COLUMNS = (
     "key run time program version calctype method basis formula success error_kind "
-    "host wall_time identities withdrawn preferred input"
+    "wall_time identities withdrawn preferred input host cpu_model devices libc"
 ).split()
 _BOOLEAN = ("success", "withdrawn", "preferred")
 
@@ -156,7 +159,8 @@ class Index:
                 ``success=True``, ``preferred=True``); None matches NULL.
 
         Returns:
-            One dict per run, with ``identities`` and ``input`` parsed from JSON.
+            One dict per run, with ``identities``, ``input`` and ``devices`` parsed
+            from JSON.
 
         Raises:
             ValueError: An unknown column, or a program name holding ``"``.
@@ -193,8 +197,8 @@ class Index:
         for row in rows:
             for name in _BOOLEAN:
                 row[name] = bool(row[name])
-            row["identities"] = json.loads(row["identities"])
-            row["input"] = json.loads(row["input"])
+            for name in ("identities", "input", "devices"):
+                row[name] = json.loads(row[name])
         return rows
 
     def sql(
@@ -296,10 +300,11 @@ class Index:
             )
             for carry in run.carries:
                 db.execute(
-                    "INSERT OR IGNORE INTO carries VALUES (?, ?, ?, ?, ?)",
+                    "INSERT INTO carries VALUES (?, ?, ?, ?, ?, ?)",
                     (
                         key,
                         run.id,
+                        carry["id"],
                         _canonical(carry["identities"]),
                         json.dumps(carry["evidence"]),
                         carry["time"],
@@ -336,12 +341,15 @@ def _row(key: str, run: _RunFiles, preferred: str | None) -> dict[str, Any]:
         "formula": _formula(inp.get("structure")),
         "success": output["success"],
         "error_kind": (output.get("error") or {}).get("kind"),
-        "host": execution.get("hostname"),
         "wall_time": execution.get("wall_time"),
         "identities": _canonical(run.record["identities"]),
         "withdrawn": run.withdrawn is not None,
         "preferred": run.id == preferred,
         "input": json.dumps(inp, ensure_ascii=False),
+        "host": execution.get("hostname"),
+        "cpu_model": execution.get("cpu_model"),
+        "devices": json.dumps(execution.get("devices", []), ensure_ascii=False),
+        "libc": execution.get("libc"),
     }
 
 

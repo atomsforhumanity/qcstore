@@ -51,11 +51,12 @@ store.get(key, {"xtb": "6.8.0"})   # None: never run with 6.8.0
 store.blob(key, "logs")            # b"normal termination of xtb\n"
 ```
 
-A new release that gives the same numbers need not rerun anything: carry the run to the
-new identities, with the evidence.
+A new release that gives the same results need not rerun anything: carry the runs to the
+new identities, with the evidence. The evidence is stored once, however many runs it
+covers, and asserts that each run's whole output is what the new code would produce.
 
 ```python
-store.carry(key, run, {"xtb": "6.8.0"}, {"compared": "energy", "max_abs_diff": 0.0})
+store.carry([(key, run)], {"xtb": "6.8.0"}, {"benchmark": "S22", "max_abs_diff": 0.0})
 store.get(key, {"xtb": "6.8.0"})   # the 6.7.1 run, valid for 6.8.0 too
 ```
 
@@ -94,8 +95,9 @@ store/
     20261117T101500.123456Z-7c1e9a0b/  one directory per run, never changed
       record.json                      identities, meta, and the output
       blobs/output.logs                logs, files and large arrays, named by JSON path
-      carries/5d41402abc4b2a76.json    "also valid for xtb 6.8.0", with the evidence
+      carries/9c1f...                  an empty marker per carry of this run
       withdrawn.json                   who withdrew it, when, and why
+  carries/9c1f....json                 a carry: "also valid for xtb 6.8.0", the evidence
   journals/<writer>/<batch>.jsonl      what each writer changed, for the index
   index.sqlite                         the optional index, rebuildable at any time
 ```

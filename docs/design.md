@@ -19,7 +19,12 @@ A stored result answers two questions, kept apart:
 A reader asks for a calculation and, optionally, for identities. `get(key)` returns the
 latest success whatever produced it; `get(key, {"xtb": "6.8.0"})` only a run produced by
 exactly those identities, or *carried* to them: marked valid for them, with the evidence,
-after a release that changed no numbers for it.
+after a release that changed no results for it.
+
+Each run also records the environment it ran in, as its output reports it
+(`execution`: host name, CPU model, GPU devices, libc version). Lookups match on
+identities only; a reader who needs results from one kind of device filters on the
+environment, in `runs()` or in the index.
 
 ## Layout
 
@@ -31,7 +36,8 @@ records/<k[3:5]>/<key>/
         record.json                 identities, meta, and the output
         blobs/<path>                logs, files and large arrays, named by JSON path
         withdrawn.json              only if withdrawn: by, time, reason
-        carries/<digest>.json       one per identity set the run was carried to
+        carries/<id>                an empty marker per carry of the run
+carries/<id>.json                   a carry: identities, evidence, by, time
 journals/<writer>/<batch>.jsonl     what each writer changed, for the index
 ```
 
@@ -106,9 +112,17 @@ filesystems and on NFS.
 - **A run** is new files in a new directory: the blobs first, then `record.json`. The
   record is the commit marker: a run without one is unfinished (still being written, or
   its writer died) and every reader ignores it.
-- **Markers** (`withdrawn.json`, `carries/*.json`) and **tags** are created exclusively.
-  The first withdrawal of a run, and the first carry of a run to an identity set,
-  stand. Untagging deletes the tag file; nothing else is ever deleted.
+- **Markers** (`withdrawn.json`, a run's `carries/<id>`) and **tags** are created
+  exclusively. The first withdrawal of a run stands. Untagging deletes the tag file;
+  nothing else is ever deleted.
+- **A carry** is one file, `carries/<id>.json` at the top of the store, written first
+  and named by the sha256 of its bytes: the new identities, the evidence, who and when.
+  Then each run carried gets an empty marker `carries/<id>` and its key's pointer is
+  updated. Carrying 1,600 runs writes one evidence file and 1,600 empty markers. A run
+  may be carried more than once, even to the same identities; each carry is more
+  evidence. A carry asserts that the run's whole output, `record` included, is what
+  the new code would produce for its input, so a release that changes the shape of
+  `record` cannot be carried.
 - **`current.json`** is the only file ever replaced. After any change to a key's runs, a
   writer reads the runs, computes the pointer, replaces `current.json`, then reads the
   runs again and repeats until the pointer it wrote matches them.
@@ -141,11 +155,12 @@ What a writer killed at any point leaves:
 | before `record.json` | an unfinished run directory | nothing: the run does not exist |
 | after `record.json`, before `current.json` | a complete run; the pointer lags | the run in `runs()`; `get` may return the previous preferred run until the key changes again or `verify --repair` |
 | after withdrawing, before `current.json` | the marker; the pointer may name the withdrawn run | `get` sees the withdrawal and skips the run |
+| partway through a carry | the carry's file, and markers on some of its runs | the marked runs carried, the rest not; carrying the rest again is harmless |
 | anywhere in a journal line | a partial last line | the index waits for the newline |
 
 `python -m qcstore verify URI` checks every complete run (its record names its key and
 run, its output loads with every blob and array matching its sha256, its input's key is
-the key it is filed under, its identities name exactly the input's programs) and every
+the key it is filed under, each of its carries' files matches its sha256) and every
 `current.json`. It lists unfinished runs, which are not problems. `--repair` rewrites
 missing or lagging pointers and changes nothing else.
 
@@ -173,8 +188,10 @@ replaced whole, so the order in which journals are read does not matter, and upd
 and rebuilding end with the same index.
 
 Tables: `runs` (one row per run: key, run, time, program, version, calctype, method,
-basis, formula, success, error kind, host, wall time, identities, withdrawn, preferred,
-and the whole input as JSON), `carries`, `tags` and `meta`. JSON columns are queried with
+basis, formula, success, error kind, wall time, identities, withdrawn, preferred, the
+whole input as JSON, and the environment: host, CPU model, devices, libc), `carries` (one
+row per run carried, with the carry's id, identities and evidence), `tags` and `meta`.
+JSON columns are queried with
 SQLite's JSON functions: `json_extract(identities, '$.linus') = '8'`.
 
 The index file lives in the store's directory by default. SQLite's locks need a local

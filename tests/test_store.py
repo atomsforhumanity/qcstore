@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 
@@ -66,6 +67,11 @@ def test_put_returns_the_run_id_and_runs_lists_it(store):
     assert listed.id == run and listed.success and listed.error_kind is None
     assert listed.identities == XTB and listed.meta == {"campaign": "demo", "n": 3}
     assert listed.program_version == "6.7.1" and listed.host == "node1"
+    assert (listed.cpu_model, listed.devices, listed.libc) == (
+        "AMD EPYC 9654",
+        ["NVIDIA H100"],
+        "glibc 2.39",
+    )
     assert listed.withdrawn is None and listed.carries == []
     assert listed.time.tzinfo is not None and listed.time.strftime("%Y%m%d") == run[:8]
 
@@ -160,14 +166,18 @@ def test_carry_makes_a_run_valid_for_new_identities(store):
     run = store.put(outputs.energy(), {"xtb": "6.7.1"})
     assert store.get(key, {"xtb": "6.8.0"}) is None
     evidence = {"compared": "energy", "max_abs_difference": 0.0}
-    store.carry(key, run, {"xtb": "6.8.0"}, evidence)
+    carry = store.carry([(key, run)], {"xtb": "6.8.0"}, evidence)
     assert store.get(key, {"xtb": "6.8.0"}) == outputs.energy()
     [listed] = store.runs(key)
+    assert listed.carries[0].id == carry
     assert listed.carries[0].identities == {"xtb": "6.8.0"}
     assert listed.carries[0].evidence == evidence
-    # Carrying again keeps the first carry; a run of the new code is preferred.
-    store.carry(key, run, {"xtb": "6.8.0"}, {"other": "evidence"})
-    assert store.runs(key)[0].carries[0].evidence == evidence
+    # Another carry adds its own marker; a run of the new code is then preferred.
+    store.carry([(key, run)], {"xtb": "6.8.0"}, {"other": "evidence"})
+    carries = store.runs(key)[0].carries
+    assert sorted(json.dumps(c.evidence) for c in carries) == sorted(
+        json.dumps(e) for e in (evidence, {"other": "evidence"})
+    )
     newer = store.put(outputs.energy(), {"xtb": "6.8.0"})
     pointer = json.loads((key_dir(store, key) / "current.json").read_text())
     assert {"identities": {"xtb": "6.8.0"}, "preferred": newer} in pointer[
@@ -175,15 +185,39 @@ def test_carry_makes_a_run_valid_for_new_identities(store):
     ]
 
 
+def test_a_bulk_carry_writes_its_evidence_once(store):
+    root = store.backend.root  # type: ignore[attr-defined]
+    runs = [store.put(outputs.energy(i), XTB) for i in range(20)]
+    runs += [store.put(outputs.energy(i, success=False), XTB) for i in range(5)]
+    pairs = [(key, run.id) for key in store.iter() for run in store.runs(key)]
+    assert sorted(r for _, r in pairs) == sorted(runs)
+    new = {"xtb": "6.8.0"}
+    carry = store.carry(pairs, new, {"benchmark": "S22", "max_abs_difference": 1e-9})
+    assert [p.name for p in (root / "carries").iterdir()] == [f"{carry}.json"]
+    document = (root / "carries" / f"{carry}.json").read_bytes()
+    assert hashlib.sha256(document).hexdigest() == carry
+    assert json.loads(document)["identities"] == new
+    for key, run in pairs:
+        assert (key_dir(store, key) / run / "carries" / carry).read_bytes() == b""
+    for i in range(20):
+        key = store.key(outputs.energy_input(i))
+        assert store.get(key, new) == store.get(key, XTB) == outputs.energy(i)
+
+
 def test_carry_is_checked(store):
     key = store.key(outputs.energy_input())
     run = store.put(outputs.energy(), XTB)
-    with pytest.raises(ValueError, match="same programs"):
-        store.carry(key, run, {"orca": "6"}, {})
-    with pytest.raises(ValueError, match="already"):
-        store.carry(key, run, XTB, {})
+    with pytest.raises(ValueError, match="at least one"):
+        store.carry([], {"xtb": "6.8.0"}, {})
     with pytest.raises(ValueError, match="evidence must be JSON"):
-        store.carry(key, run, {"xtb": "6.8.0"}, {"x": {1, 2}})
+        store.carry([(key, run)], {"xtb": "6.8.0"}, {"x": {1, 2}})
+    with pytest.raises(TypeError, match="strings to strings"):
+        store.carry([(key, run)], {"xtb": 6}, {})  # type: ignore[dict-item]
+    missing = (key, "20260101T000000.000000Z-00000000")
+    with pytest.raises(KeyError):
+        store.carry([(key, run), missing], {"xtb": "6.8.0"}, {})
+    assert not (store.backend.root / "carries").exists()  # type: ignore[attr-defined]
+    assert store.runs(key)[0].carries == []
 
 
 # ---------------------------------------------------------------- blobs
@@ -333,7 +367,7 @@ def test_copy_to_copies_runs_unchanged(store, tmp_path):
     # Runs it has are skipped; withdrawals and carries follow.
     store.withdraw(key, first, "bad")
     second = store.put(outputs.energy(), XTB)
-    store.carry(key, second, {"xtb": "6.8.0"}, {"why": "same"})
+    store.carry([(key, second)], {"xtb": "6.8.0"}, {"why": "same"})
     assert store.copy_to(other) == 2
     assert other.runs(key) == store.runs(key)
     assert other.get(key, {"xtb": "6.8.0"}) == outputs.energy()

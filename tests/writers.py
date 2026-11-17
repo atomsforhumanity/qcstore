@@ -40,7 +40,7 @@ def mixed(root: str, worker: int, keys: int, steps: int, report: str) -> None:
         elif action < 0.8:
             run = rng.choice(runs)
             other = {"xtb": next(v for v in VERSIONS if v != run.identities["xtb"])}
-            store.carry(key, run.id, other, {"writer": worker})
+            store.carry([(key, run.id)], other, {"writer": worker})
         elif action < 0.9:
             store.tag(key, "shared", f"w{worker}")
         else:

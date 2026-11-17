@@ -93,3 +93,13 @@ def test_an_unreadable_record_is_a_problem(store):
     (run_dir(store, outputs.energy()) / "record.json").write_text("{not json")
     [problem] = verify(store).problems
     assert "unreadable" in problem
+
+
+def test_a_changed_carry_is_found(store):
+    key = store.key(outputs.energy_input())
+    [run] = store.runs(key)
+    carry = store.carry([(key, run.id)], {"xtb": "6.8.0"}, {"why": "same"})
+    path = store.backend.root / "carries" / f"{carry}.json"  # type: ignore[attr-defined]
+    path.write_text(path.read_text().replace("same", "different"))
+    [problem] = verify(store).problems
+    assert "does not match its sha256" in problem

@@ -39,8 +39,9 @@ def verify(store: Store, *, repair: bool = False) -> Report:
     """Check every run of every calculation in a store.
 
     For each complete run: its record names its key and run, its output loads (every
-    blob and array file matching its sha256), and the key recomputed from its input is
-    the key it is filed under. For each key: ``current.json`` names the runs the rules prefer.
+    blob and array file matching its sha256), the key recomputed from its input is the
+    key it is filed under, and each of its carries' files matches its sha256. For each
+    key: ``current.json`` names the runs the rules prefer.
 
     Args:
         store: The store.
