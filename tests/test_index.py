@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 
 from qcstore import Index, Store
+from qcstore.store import _key_dir
 from tests import outputs
 from tests.outputs import XTB
 
@@ -197,7 +198,7 @@ def test_a_change_whose_writer_died_is_reread_on_every_update(store, tmp_path):
     store.put(outputs.energy(), XTB)
     index = store.index()
     key = store.key(outputs.energy_input())
-    tags = store.backend.root / "records" / key[3:5] / key / "tags"  # type: ignore[attr-defined]
+    tags = store.backend.root / _key_dir(key) / "tags"  # type: ignore[attr-defined]
     store.backend.append(
         "journals/dead-1/batch.jsonl",
         (json.dumps({"n": 1, "op": "tag", "key": key}) + "\n").encode(),

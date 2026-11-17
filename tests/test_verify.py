@@ -7,6 +7,7 @@ import pytest
 
 from qcstore import Store, verify
 from qcstore.__main__ import main
+from qcstore.store import _key_dir
 from tests import outputs
 from tests.outputs import XTB
 
@@ -23,7 +24,7 @@ def store(tmp_path: Path) -> Store:
 def run_dir(store: Store, output) -> Path:
     key = store.key(output.input_data)
     [run] = store.runs(key)
-    return store.backend.root / "records" / key[3:5] / key / run.id  # type: ignore[attr-defined]
+    return store.backend.root / _key_dir(key) / run.id  # type: ignore[attr-defined]
 
 
 def test_a_sound_store_passes(store, capsys):
@@ -103,3 +104,16 @@ def test_a_changed_carry_is_found(store):
     path.write_text(path.read_text().replace("same", "different"))
     [problem] = verify(store).problems
     assert "does not match its sha256" in problem
+
+
+def test_strays_under_records_are_problems(store):
+    root = store.backend.root  # type: ignore[attr-defined]
+    (root / "records" / "ab" / ("k1:" + "ab" * 32)).mkdir(parents=True)  # 0.1.0a1
+    (root / "records" / "k1" / "zz").mkdir()
+    (root / "records" / "k1" / "00" / ("ff" * 32)).mkdir(parents=True)
+    rule = "not part of the layout (records/k1/<2 hex>/<64 hex>)"
+    assert verify(store).problems == [
+        f"records/ab: {rule}",
+        f"records/k1/00/{'ff' * 32}: {rule}",
+        f"records/k1/zz: {rule}",
+    ]

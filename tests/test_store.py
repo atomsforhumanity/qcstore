@@ -6,6 +6,7 @@ import pytest
 from qcdata import calculation_key
 
 from qcstore import Store
+from qcstore.store import _key_dir
 from tests import outputs
 from tests.outputs import XTB
 
@@ -16,7 +17,7 @@ def store(tmp_path: Path) -> Store:
 
 
 def key_dir(store: Store, key: str) -> Path:
-    return store.backend.root / "records" / key[3:5] / key  # type: ignore[attr-defined]
+    return store.backend.root / _key_dir(key)  # type: ignore[attr-defined]
 
 
 # ---------------------------------------------------------------- put and get
@@ -260,6 +261,9 @@ def test_the_layout_is_plain_json(store):
     run = store.put(output, XTB, tags=["screen"])
     key = store.key(output.input_data)
     directory = key_dir(store, key)
+    # No colon in any name: the key's version and hash are directories.
+    assert directory == store.backend.root / "records" / "k1" / key[3:5] / key[3:]
+    assert not any(":" in p.name for p in store.backend.root.rglob("*"))
     assert sorted(p.name for p in directory.iterdir()) == sorted(
         ["current.json", run, "tags"]
     )
@@ -332,7 +336,9 @@ def test_tags(store):
         "a",
         "c",
     ]
-    for bad in ["", ".hidden", "UPPER", "a/b", "x" * 65, ".."]:
+    store.tag(key, "v1.2", "con-test", "x" * 64)
+    bad_tags = ["", ".hidden", "UPPER", "a/b", "x" * 65, "..", "end.", "con", "nul.txt"]
+    for bad in bad_tags:
         with pytest.raises(ValueError, match="A tag is"):
             store.tag(key, bad)
     with pytest.raises(TypeError):
@@ -383,3 +389,9 @@ def test_uris(tmp_path):
     with pytest.raises(ValueError, match="s3://"):
         Store("s3://bucket/prefix")
     assert "Store(LocalBackend(" in repr(Store(tmp_path))
+
+
+def test_the_version():
+    import qcstore
+
+    assert qcstore.__version__[0].isdigit()

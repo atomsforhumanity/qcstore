@@ -13,11 +13,14 @@ A stored result answers two questions, kept apart:
   holding keys (reaction networks, campaign lists, tags) stays valid across releases.
 - **Which code produced the numbers?** The *numerics identity* of each program the
   input names, `{program: numerics}`: a string that changes whenever results for an
-  unchanged input may change (a version, a numerics epoch, a model checksum). The
-  caller supplies it to `put`, and every run records it.
+  unchanged input may change. The caller supplies it to `put` (qccompute's runner
+  asks each program), and every run records it. A Python library's is its name and
+  version (`{"tblite": "tblite 0.8.0"}`), an external executable's the sha256 of the
+  file (`{"xtb": "sha256:9c1f…"}`), a program with numerics epochs its epoch, an ML
+  potential its model's checksum. qcstore only compares them as strings.
 
 A reader asks for a calculation and, optionally, for identities. `get(key)` returns the
-latest success whatever produced it; `get(key, {"xtb": "6.8.0"})` only a run produced by
+latest success whatever produced it; `get(key, {"tblite": "tblite 0.9.0"})` only a run produced by
 exactly those identities, or *carried* to them: marked valid for them, with the evidence,
 after a release that changed no results for it.
 
@@ -29,7 +32,7 @@ environment, in `runs()` or in the index.
 ## Layout
 
 ```text
-records/<k[3:5]>/<key>/
+records/k1/<2 hex>/<64 hex>/
     current.json                    the preferred run, overall and per identity set
     tags/<tag>                      an empty file per tag on the key
     <run>/
@@ -41,7 +44,10 @@ carries/<id>.json                   a carry: identities, evidence, by, time
 journals/<writer>/<batch>.jsonl     what each writer changed, for the index
 ```
 
-Keys are sharded by their first two hex digits. A run id is the UTC time of the `put`
+A key `k1:<64 hex>` lives in `records/k1/<first 2 hex>/<64 hex>/`: its version and
+hash as directories, so no name holds a colon, which Windows forbids, and keys spread
+over 256 shards. Tags are lower case and never start or end with a dot or take a name
+Windows reserves (`con`, `nul`, `com1`, ...). A run id is the UTC time of the `put`
 to the microsecond and a random suffix (`20261117T101500.123456Z-7c1e9a0b`), so run
 directories sort by time.
 
@@ -52,7 +58,7 @@ directories sort by time.
   "format": 1,
   "key": "k1:3f9a...",
   "run": "20261117T101500.123456Z-7c1e9a0b",
-  "identities": {"xtb": "6.7.1"},
+  "identities": {"tblite": "tblite 0.8.0"},
   "meta": {"campaign": "screen-1"},
   "blobs": {
     "output.logs": {"sha256": "e3bf..."},
@@ -86,8 +92,8 @@ set:
 {
   "preferred": "20261117T101500.123456Z-7c1e9a0b",
   "by_identities": [
-    {"identities": {"xtb": "6.7.1"}, "preferred": "20261117T101500.123456Z-7c1e9a0b"},
-    {"identities": {"xtb": "6.8.0"}, "preferred": "20261118T090000.000000Z-0b1c2d3e"}
+    {"identities": {"tblite": "tblite 0.8.0"}, "preferred": "20261117T101500.123456Z-7c1e9a0b"},
+    {"identities": {"tblite": "tblite 0.9.0"}, "preferred": "20261118T090000.000000Z-0b1c2d3e"}
   ]
 }
 ```

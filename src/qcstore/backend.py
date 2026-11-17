@@ -1,6 +1,6 @@
 """Where a store's files live: a small interface, and the local filesystem behind it.
 
-A store reads and writes whole files by relative path (``records/3f/k1:3f.../current.json``)
+A store reads and writes whole files by relative path (``records/k1/3f/3f9a.../current.json``)
 through a `Backend`, so the same store logic can run on another medium. Every write is
 atomic: a reader sees a file whole or not at all. Nothing but the files a store asks to
 replace is ever overwritten, so an immutable file stays immutable even if two writers

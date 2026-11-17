@@ -52,7 +52,8 @@ def verify(store: Store, *, repair: bool = False) -> Report:
         The report.
     """
     report = Report()
-    for key in store._keys():
+    strays: list[str] = []
+    for key in store._keys(strays):
         report.keys += 1
         directory = _key_dir(key)
         for name in store.backend.list(directory):
@@ -90,4 +91,8 @@ def verify(store: Store, *, repair: bool = False) -> Report:
                 report.problems.append(
                     f"{directory}/current.json: {state}; `verify --repair` rewrites it"
                 )
+    report.problems += [
+        f"{path}: not part of the layout (records/k1/<2 hex>/<64 hex>)"
+        for path in strays
+    ]
     return report

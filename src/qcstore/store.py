@@ -1,14 +1,14 @@
 """The store: every run of every calculation, as plain JSON records on disk.
 
-A calculation is named by its key, ``qcdata.calculation_key(inp)``: the input alone. Each
-time it runs, `Store.put` adds a run, which is never changed or deleted afterwards. A
-run records the numerics identities of the programs that produced it
-(``{"xtb": "6.7.1"}``), so readers can tell results of different code apart while the
-key stays the same across releases.
+A calculation is named by its key, ``qcdata.calculation_key(inp)``: the input alone.
+Each time it runs, `Store.put` adds a run, which is never changed or deleted afterwards.
+A run records the numerics identities of the programs that produced it
+(``{"tblite": "tblite 0.8.0"}``), so readers can tell results of different code apart
+while the key stays the same across releases.
 
 Layout (see ``docs/design.md``)::
 
-    records/<k[3:5]>/<key>/
+    records/k1/<2 hex>/<64 hex>/        a key, k1:<64 hex>, as a path without a colon
         current.json                    the preferred run, overall and per identity set
         tags/<tag>                      an empty file per tag on the key
         <run>/record.json               the run: identities, meta, and the output
@@ -58,9 +58,13 @@ __all__ = ["Carry", "Run", "Store", "Withdrawal"]
 #: The version of the record layout, written in every ``record.json``.
 FORMAT = 1
 
-_KEY = re.compile(r"k[0-9]+:[0-9a-f]{64}")
+_KEY = re.compile(r"(k[0-9]+):([0-9a-f]{64})")
 _RUN = re.compile(r"[0-9]{8}T[0-9]{6}\.[0-9]{6}Z-[0-9a-f]{8}")
-_TAG = re.compile(r"[a-z0-9_-][a-z0-9._-]{0,63}")
+_TAG = re.compile(r"[a-z0-9_-]([a-z0-9._-]{0,62}[a-z0-9_-])?")
+#: Names Windows reserves for devices, with or without an extension.
+_RESERVED = {"con", "prn", "aux", "nul"} | {
+    f"{d}{i}" for d in ("com", "lpt") for i in range(1, 10)
+}
 
 Input = FileInput | ProgramInput
 Output = ProgramOutput[Any, Any]
@@ -157,8 +161,8 @@ class Store:
     Example:
         ```python
         store = Store("./store")
-        run = store.put(output, {"xtb": "6.7.1"}, tags=["screen"])
-        store.get(store.key(inp), {"xtb": "6.7.1"})
+        run = store.put(output, {"tblite": "tblite 0.8.0"}, tags=["screen"])
+        store.get(store.key(inp), {"tblite": "tblite 0.8.0"})
         ```
 
     Attributes:
@@ -369,7 +373,8 @@ class Store:
 
         Raises:
             KeyError: The store has no run of this calculation.
-            ValueError: A tag does not match ``[a-z0-9_-][a-z0-9._-]{0,63}``.
+            ValueError: A tag is not 1-64 of ``a-z0-9._-`` without a dot at either
+                end, or is a name Windows reserves.
         """
         checked = _check_tags(tags)
         if not self._has_runs(_check_key(key)):
@@ -439,12 +444,27 @@ class Store:
 
     # ------------------------------------------------------------------ reading
 
-    def _keys(self) -> Iterator[str]:
-        """Every key directory, complete runs or not, in key order."""
-        for shard in self.backend.list("records"):
-            for name in self.backend.list(f"records/{shard}"):
-                if _KEY.fullmatch(name):
-                    yield name
+    def _keys(self, strays: list[str] | None = None) -> Iterator[str]:
+        """Every key directory, complete runs or not, in key order.
+
+        Args:
+            strays: Collects the paths under ``records/`` that are not part of the
+                layout (`verify` reports them).
+        """
+        strays = [] if strays is None else strays
+        for version in self.backend.list("records"):
+            if not re.fullmatch(r"k[0-9]+", version):
+                strays.append(f"records/{version}")
+                continue
+            for shard in self.backend.list(f"records/{version}"):
+                if not re.fullmatch(r"[0-9a-f]{2}", shard):
+                    strays.append(f"records/{version}/{shard}")
+                    continue
+                for digest in self.backend.list(f"records/{version}/{shard}"):
+                    if re.fullmatch(r"[0-9a-f]{64}", digest) and digest[:2] == shard:
+                        yield f"{version}:{digest}"
+                    else:
+                        strays.append(f"records/{version}/{shard}/{digest}")
 
     def _run_ids(self, key: str) -> list[str]:
         """The ids of a calculation's complete runs, oldest first."""
@@ -895,7 +915,9 @@ def _run(files: _RunFiles) -> Run:
 
 
 def _key_dir(key: str) -> str:
-    return f"records/{key.partition(':')[2][:2]}/{key}"
+    """``records/k1/3f/3f9a...``: the key without its colon, which Windows forbids."""
+    version, _, digest = key.partition(":")
+    return f"records/{version}/{digest[:2]}/{digest}"
 
 
 def _run_dir(key: str, run: str) -> str:
@@ -913,10 +935,15 @@ def _check_tags(tags: Iterable[str]) -> list[str]:
         raise TypeError("Pass tags as a list of strings, not one string.")
     checked = list(dict.fromkeys(tags))
     for tag in checked:
-        if not isinstance(tag, str) or not _TAG.fullmatch(tag):
+        if (
+            not isinstance(tag, str)
+            or not _TAG.fullmatch(tag)
+            or tag.split(".")[0] in _RESERVED
+        ):
             raise ValueError(
-                f"A tag is 1-64 of a-z, 0-9, '.', '_' and '-', not starting with '.'; "
-                f"got {tag!r}."
+                "A tag is 1-64 of a-z, 0-9, '.', '_' and '-', neither starting nor "
+                "ending with '.', and not a name Windows reserves (con, nul, com1, "
+                f"...); got {tag!r}."
             )
     return checked
 
