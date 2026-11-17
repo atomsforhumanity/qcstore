@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [unreleased]
 
+## [0.1.0a2] - 2026-11-17
+
 ### Changed
 
 - Record paths are Windows-safe: a key `k1:<64 hex>` lives in `records/k1/<2 hex>/<64 hex>/`, with no colon in any name. Stores written by 0.1.0a1 (`records/<2 hex>/k1:<64 hex>/`) are not read; `verify` reports their directories as not part of the layout.
