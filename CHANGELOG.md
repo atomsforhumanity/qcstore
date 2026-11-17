@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [unreleased]
 
+## [0.1.0a1] - 2026-11-17
+
+The first alpha of qcstore: a general store for quantum chemistry results, depending on qcdata only.
+
 ### Added
 
 - `Store(uri)`: every run of every calculation, filed under `qcdata.calculation_key(inp)` (the input alone) as plain JSON records, on a local disk or NFS, with many writers at once and no locks. Each run records the numerics identities of the programs that produced it.
