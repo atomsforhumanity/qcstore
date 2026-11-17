@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [unreleased]
 
+## [0.1.0a3] - 2026-11-17
+
 ### Changed
 
 - `put(output, tags=(), meta=None)` reads the identities from the output, `output.execution.identities` (qcdata's new field, set by the runner on every output), and stores them with it; the `identities` parameter is gone. An output without identities is refused.
