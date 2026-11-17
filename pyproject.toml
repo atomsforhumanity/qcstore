@@ -1,0 +1,97 @@
+[project]
+name = "qcstore"
+version = "0.0.0"
+description = "A store for quantum chemistry results: plain JSON records, safe under concurrent writers."
+readme = "README.md"
+authors = [{ name = "Colton Hicks", email = "github@coltonhicks.com" }]
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+keywords = ["quantum-chemistry", "cache", "provenance", "data-store"]
+dependencies = ["qcdata>=0.24.0a1"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries",
+]
+
+[project.urls]
+Homepage = "https://github.com/atomsforhumanity/qcstore"
+Documentation = "https://qcstore.docs.afh.org"
+Source = "https://github.com/atomsforhumanity/qcstore"
+Changelog = "https://github.com/atomsforhumanity/qcstore/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/atomsforhumanity/qcstore/issues"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12",
+    "mypy>=1.15",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "pre-commit>=4.0",
+    "pre-commit-hooks>=5.0",
+    "detect-secrets>=1.5",
+    "typos>=1.30",
+]
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.30",
+    "mkdocstrings[python]>=0.25.2",
+    "pymdown-extensions>=10.9,<11",
+]
+
+[build-system]
+requires = ["hatchling>=1.22"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+extend-exclude = ["*.ipynb", "*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "D"]
+ignore = ["E501"] # line length is the formatter's job
+
+[tool.ruff.lint.isort]
+known-first-party = ["qcstore", "tests"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+"docs/**" = ["D"]
+
+[tool.coverage.run]
+branch = true
+source = ["qcstore"]
+# Writer processes the tests start report their coverage too.
+parallel = true
+concurrency = ["thread", "multiprocessing"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src", "tests"]
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
