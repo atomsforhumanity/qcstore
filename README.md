@@ -10,10 +10,18 @@ Python standard library.
 
 ## Install
 
-qcstore is in alpha. Install it with the alpha releases of the rest of the stack:
+qcstore is in alpha. Install it pinned with qcdata (`--prerelease=allow` lets the
+resolver take pre-releases):
 
 ```sh
-uv pip install --prerelease=allow "qcdata==0.24.0a2" "qccompute[qccodec]==0.23.0a1" "qcstore==0.1.0a1"
+uv pip install --prerelease=allow "qcdata==0.24.0a6" "qcstore==0.1.0a4"
+```
+
+To cache calculations that qccompute runs, as at the end of the next section, add the
+runner and its external programs:
+
+```sh
+uv pip install --prerelease=allow "qcdata==0.24.0a6" "qccompute[qccodec]==0.23.0a5" "qccodec==0.22.0a4" "qcstore==0.1.0a4"
 ```
 
 ## Five minutes
@@ -134,6 +142,7 @@ store/
 
 ## Documentation
 
-[qcstore.docs.afh.org](https://qcstore.docs.afh.org): the API, and the
-[design](https://qcstore.docs.afh.org/design/): the layout, how writers agree without
-locks, and what a crash can and cannot leave behind.
+[qcstore.docs.afh.org/next](https://qcstore.docs.afh.org/next/) documents the alpha: the
+API, and the [design](https://qcstore.docs.afh.org/next/design/): the layout, how writers
+agree without locks, and what a crash can and cannot leave behind. Until qcstore's first
+final release, the site root shows the same pages.
