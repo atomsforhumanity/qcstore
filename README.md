@@ -56,6 +56,7 @@ store.get(key)                     # the latest success, whatever produced it
 store.get(key, tblite)             # only a run of tblite 0.8.0
 store.get(key, {"tblite": "tblite 0.9.0"})   # None: never run with 0.9.0
 store.blob(key, "logs")            # b"SCF converged in 9 iterations\n"
+store.get(key).execution.store_run # "k1:35a1.../20261117T...": read from this store
 ```
 
 A new release that gives the same results need not rerun anything: carry the runs to the
@@ -91,7 +92,9 @@ index.sql(
 
 With [qccompute](https://github.com/atomsforhumanity/qccompute), a store caches
 calculations: `qccompute.compute(inp, store=store)` returns a stored result when one
-from the same code exists, and stores what it runs.
+from the same code exists, and stores what it runs. A stored result says so:
+`execution.store_run` names the key and run it was read from, and is None on a fresh
+run.
 
 ## On disk
 

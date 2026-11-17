@@ -142,7 +142,9 @@ the pointer is right. Two writers that read the same runs write the same bytes.
 ## Reading
 
 `get(key, identities)` reads `current.json`, then that run's `record.json`, its arrays
-and (unless `blobs=False`) its logs and files. `blob(key, path)` reads one blob alone.
+and (unless `blobs=False`) its logs and files. The output it returns says where it was
+read from: `execution.store_run` is `"<key>/<run>"`. `put` removes that field, at any
+depth (a frame made from a stored output carries it too), so it is never stored. `blob(key, path)` reads one blob alone.
 `runs(key)` reads every complete run with its markers.
 
 A pointer can lag behind the runs when a writer is killed between changing them and

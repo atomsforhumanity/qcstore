@@ -11,6 +11,7 @@ import pytest
 from qcstore import Store, verify
 from qcstore.store import _key_dir, _pointer
 from tests import outputs, writers
+from tests.outputs import unmarked
 from tests.test_index import contents, rebuilt
 
 spawn = multiprocessing.get_context("spawn")
@@ -79,11 +80,11 @@ def test_a_writer_killed_at_each_step(tmp_path, point):
         assert report.problems == []
     elif point == "current.json":  # committed, but the pointer not yet updated
         assert len(runs) == 2 and report.incomplete == []
-        assert store.get(key) == outputs.energy()
+        assert unmarked(store.get(key)) == outputs.energy()
         assert store.get(key, {"xtb": "6.8.0"}) is None  # stale until repaired
         assert len(report.problems) == 1 and "stale" in report.problems[0]
         assert verify(store, repair=True).repaired
-        assert store.get(key, {"xtb": "6.8.0"}) == outputs.energy()
+        assert unmarked(store.get(key, {"xtb": "6.8.0"})) == outputs.energy()
     else:  # all done but the journal's done line
         assert len(runs) == 2 and report.problems == []
     assert verify(store).problems == []
@@ -103,7 +104,7 @@ def test_a_writer_killed_on_a_new_key_leaves_no_pointer_to_trust(tmp_path):
     child.join()
     key = store.key(outputs.energy_input(5))
     # No current.json yet: readers work it out from the runs.
-    assert store.get(key, {"xtb": "6.8.0"}) == outputs.energy(5)
+    assert unmarked(store.get(key, {"xtb": "6.8.0"})) == outputs.energy(5)
     assert list(store.iter()) == [key]
     assert "missing" in verify(store).problems[0]
 

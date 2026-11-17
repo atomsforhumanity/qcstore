@@ -45,7 +45,14 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import unquote, urlparse
 
 from pydantic import BaseModel
-from qcdata import FileInput, Files, OutputBase, ProgramInput, ProgramOutput
+from qcdata import (
+    ExecutionInfo,
+    FileInput,
+    Files,
+    OutputBase,
+    ProgramInput,
+    ProgramOutput,
+)
 from qcdata import calculation_key as _calculation_key
 
 from .backend import Backend, LocalBackend
@@ -218,7 +225,8 @@ class Store:
                 empty) and reads only the record and its arrays.
 
         Returns:
-            The output as stored, or None.
+            The output as stored, with ``execution.store_run`` set to ``"<key>/<run>"``:
+            where it was read from. None if there is none.
         """
         run = self._preferred(_check_key(key), identities)
         return None if run is None else self._load(key, run, blobs)
@@ -232,6 +240,9 @@ class Store:
         meta: Mapping[str, Any] | None = None,
     ) -> str:
         """Add a run under the key of ``output.input_data``.
+
+        ``execution.store_run`` says where an output was read from, so it is never
+        stored, at any depth.
 
         Args:
             output: The calculation's output, successful or not.
@@ -566,6 +577,8 @@ class Store:
                     else data.decode("utf-8")
                 )
                 _set(record, _blob_path(name), value)
+        execution = record["output"].setdefault("execution", {})
+        execution["store_run"] = f"{key}/{run}"
         if not arrays:
             return ProgramOutput.model_validate(record["output"])
         # qcdata reads large arrays from .npy files beside the model's file.
@@ -704,15 +717,23 @@ def _run_files(
         "output": document,
     }
     files: dict[str, bytes] = {}
-    for path, value in _blob_values(output, ("output",)):
-        del _at(record, path[:-1])[path[-1]]
-        name = ".".join(_escape(part) for part in path)
-        data = value if isinstance(value, bytes) else value.encode("utf-8")
-        entry: dict[str, Any] = {"sha256": _digest(data)}
-        if isinstance(value, bytes):
-            entry["binary"] = True
-        record["blobs"][name] = entry
-        files[f"blobs/{name}"] = data
+    for path, model in _models(output, ("output",)):
+        if isinstance(model, ExecutionInfo) and model.store_run is not None:
+            del _at(record, path)["store_run"]  # where it was read from: not a result
+        bulky: list[tuple[tuple[str, ...], str | bytes]] = []
+        if isinstance(model, OutputBase) and model.logs is not None:
+            bulky.append((("logs",), model.logs))
+        if isinstance(model, Files):
+            bulky += [(("files", name), data) for name, data in model.files.items()]
+        for rest, value in bulky:
+            del _at(record, (*path, *rest[:-1]))[rest[-1]]
+            name = ".".join(_escape(part) for part in (*path, *rest))
+            data = value if isinstance(value, bytes) else value.encode("utf-8")
+            entry: dict[str, Any] = {"sha256": _digest(data)}
+            if isinstance(value, bytes):
+                entry["binary"] = True
+            record["blobs"][name] = entry
+            files[f"blobs/{name}"] = data
     for name, data in arrays.items():
         record["blobs"][name] = {"sha256": _digest(data)}
         files[f"blobs/{name}"] = data
@@ -720,28 +741,20 @@ def _run_files(
     return files
 
 
-def _blob_values(
-    value: Any, path: tuple[str, ...]
-) -> Iterator[tuple[tuple[str, ...], str | bytes]]:
-    """Every log and file in a model, at any depth, with its path in the document."""
-    if isinstance(value, OutputBase) and value.logs is not None:
-        yield (*path, "logs"), value.logs
-    if isinstance(value, Files):
-        for name, data in value.files.items():
-            yield (*path, "files", name), data
+def _models(value: Any, path: tuple[str, ...]) -> Iterator[tuple[tuple[str, ...], Any]]:
+    """Every model in a value, at any depth, with its path in the saved document."""
     if isinstance(value, BaseModel):
-        for name in type(value).model_fields:
-            child = getattr(value, name)
-            if isinstance(child, BaseModel | list | tuple | dict):
-                yield from _blob_values(child, (*path, name))
+        yield path, value
+        children = [(name, getattr(value, name)) for name in type(value).model_fields]
     elif isinstance(value, list | tuple):
-        for i, item in enumerate(value):
-            if isinstance(item, BaseModel | list | tuple | dict):
-                yield from _blob_values(item, (*path, str(i)))
+        children = [(str(i), item) for i, item in enumerate(value)]
     elif isinstance(value, dict):
-        for name, item in value.items():
-            if isinstance(item, BaseModel | list | tuple | dict):
-                yield from _blob_values(item, (*path, str(name)))
+        children = [(str(name), item) for name, item in value.items()]
+    else:
+        return
+    for name, child in children:
+        if isinstance(child, BaseModel | list | tuple | dict):
+            yield from _models(child, (*path, name))
 
 
 def _escape(part: str) -> str:

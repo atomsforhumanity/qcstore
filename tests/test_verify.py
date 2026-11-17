@@ -9,7 +9,7 @@ from qcstore import Store, verify
 from qcstore.__main__ import main
 from qcstore.store import _key_dir
 from tests import outputs
-from tests.outputs import XTB
+from tests.outputs import XTB, unmarked
 
 
 @pytest.fixture
@@ -76,7 +76,7 @@ def test_a_stale_pointer_is_found_and_repaired(store, capsys):
     assert "stale; `verify --repair` rewrites it" in capsys.readouterr().out
     assert main(["verify", root, "--repair"]) == 0
     assert "repaired: records/" in capsys.readouterr().out
-    assert store.get(store.key(outputs.energy_input())) == outputs.energy()
+    assert unmarked(store.get(store.key(outputs.energy_input()))) == outputs.energy()
     assert main(["verify", root]) == 0
 
 

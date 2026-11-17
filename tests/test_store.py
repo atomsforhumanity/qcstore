@@ -3,12 +3,18 @@ import json
 from pathlib import Path
 
 import pytest
-from qcdata import calculation_key
+from qcdata import (
+    Frame,
+    OptimizationData,
+    ProgramInput,
+    ProgramOutput,
+    calculation_key,
+)
 
 from qcstore import Store
 from qcstore.store import _key_dir
 from tests import outputs
-from tests.outputs import XTB
+from tests.outputs import XTB, unmarked
 
 
 @pytest.fixture
@@ -32,13 +38,50 @@ def test_get_returns_what_was_put(store, make):
     identities = {"files": "1"} if make is outputs.files_output else {"any": "1"}
     store.put(output, identities)
     key = store.key(output.input_data)
-    assert store.get(key) == output
-    assert store.get(key, identities) == output
+    assert unmarked(store.get(key)) == output
+    assert unmarked(store.get(key, identities)) == output
 
 
 def test_the_key_is_qcdatas(store):
     inp = outputs.energy_input()
     assert store.key(inp) == calculation_key(inp)
+
+
+def test_get_marks_where_it_read_from(store):
+    key = store.key(outputs.energy_input())
+    first = store.put(outputs.energy(), XTB)
+    second = store.put(outputs.energy(success=False), {"xtb": "6.8.0"})
+    assert store.get(key).execution.store_run == f"{key}/{first}"
+    assert store.get(key, {"xtb": "6.8.0"}).execution.store_run == f"{key}/{second}"
+    assert store.get(key, blobs=False).execution.store_run == f"{key}/{first}"
+    assert outputs.energy().execution.store_run is None
+
+
+def test_put_never_stores_where_an_output_was_read_from(store):
+    key = store.key(outputs.energy_input())
+    store.put(outputs.energy(), XTB)
+    read = store.get(key)
+    again = store.put(read, XTB)  # an output read from a store, stored again
+    frames = [Frame.from_output(read), Frame.from_output(read)]
+    assert frames[0].execution.store_run == read.execution.store_run
+    optimization = ProgramOutput(
+        input_data=ProgramInput(
+            program="xtb",
+            calctype="optimization",
+            structure=outputs.molecule(),
+            model={"method": "gfn2"},
+        ),
+        results=OptimizationData(provenance={"program": "xtb"}, frames=frames),
+        success=True,
+    )
+    store.put(optimization, XTB)
+    for record in store.backend.root.rglob("record.json"):  # type: ignore[attr-defined]
+        assert b"store_run" not in record.read_bytes()
+    assert store.get(key).execution.store_run == f"{key}/{again}"
+    opt_key = store.key(optimization.input_data)
+    got = store.get(opt_key)
+    assert [f.execution.store_run for f in got.results.frames] == [None, None]
+    assert got.execution.store_run.startswith(opt_key)
 
 
 def test_get_without_blobs_leaves_logs_and_files_out(store):
@@ -146,7 +189,7 @@ def test_withdrawn_runs_are_never_preferred(store):
     store.withdraw(key, second, "wrong charge")
     assert [r.id for r in store.runs(key)] == [first, second]
     assert store.runs(key)[1].withdrawn.reason == "wrong charge"
-    assert store.get(key) == outputs.energy()
+    assert unmarked(store.get(key)) == outputs.energy()
     store.withdraw(key, first, "also wrong")
     assert store.get(key) is None and store.get(key, XTB) is None
     # A second withdrawal keeps the first reason; nothing was deleted.
@@ -168,7 +211,7 @@ def test_carry_makes_a_run_valid_for_new_identities(store):
     assert store.get(key, {"xtb": "6.8.0"}) is None
     evidence = {"compared": "energy", "max_abs_difference": 0.0}
     carry = store.carry([(key, run)], {"xtb": "6.8.0"}, evidence)
-    assert store.get(key, {"xtb": "6.8.0"}) == outputs.energy()
+    assert unmarked(store.get(key, {"xtb": "6.8.0"})) == outputs.energy()
     [listed] = store.runs(key)
     assert listed.carries[0].id == carry
     assert listed.carries[0].identities == {"xtb": "6.8.0"}
@@ -202,7 +245,8 @@ def test_a_bulk_carry_writes_its_evidence_once(store):
         assert (key_dir(store, key) / run / "carries" / carry).read_bytes() == b""
     for i in range(20):
         key = store.key(outputs.energy_input(i))
-        assert store.get(key, new) == store.get(key, XTB) == outputs.energy(i)
+        assert unmarked(store.get(key, new)) == unmarked(store.get(key, XTB))
+        assert unmarked(store.get(key, XTB)) == outputs.energy(i)
 
 
 def test_carry_is_checked(store):
@@ -376,7 +420,7 @@ def test_copy_to_copies_runs_unchanged(store, tmp_path):
     store.carry([(key, second)], {"xtb": "6.8.0"}, {"why": "same"})
     assert store.copy_to(other) == 2
     assert other.runs(key) == store.runs(key)
-    assert other.get(key, {"xtb": "6.8.0"}) == outputs.energy()
+    assert unmarked(other.get(key, {"xtb": "6.8.0"})) == outputs.energy()
     assert (key_dir(other, key) / "tags" / "t").exists()
     assert store.copy_to(other) == 0
 

@@ -6,7 +6,7 @@ import pytest
 
 from qcstore import Backend, LocalBackend, Store, verify
 from tests import outputs
-from tests.outputs import XTB
+from tests.outputs import XTB, unmarked
 
 
 class MemoryBackend:
@@ -52,8 +52,8 @@ def test_the_store_needs_only_the_backend_interface(tmp_path):
     run = store.put(hessian, XTB, tags=["big"])
     store.put(optimization, {"qcopt": "0.3.0", "xtb": "6.7.1"})
     key = store.key(hessian.input_data)
-    assert store.get(key) == hessian
-    assert store.get(store.key(optimization.input_data)) == optimization
+    assert unmarked(store.get(key)) == hessian
+    assert unmarked(store.get(store.key(optimization.input_data))) == optimization
     store.carry([(key, run)], {"xtb": "6.8.0"}, {"why": "test"})
     store.withdraw(key, run, "test")
     assert store.get(key) is None and len(store.runs(key)) == 1

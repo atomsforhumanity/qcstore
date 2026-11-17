@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - `qcstore.__version__`.
+- `get` marks what it returns with where it was read from, `execution.store_run = "<key>/<run>"` (qcdata's new `ExecutionInfo.store_run`), so a cache hit can be told from a fresh run; `put` removes the field at any depth, so it is never stored.
 - The README installs the alpha releases together and shows identities as qccompute records them.
 
 ## [0.1.0a1] - 2026-11-17

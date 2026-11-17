@@ -155,3 +155,9 @@ def files_output() -> ProgramOutput:
         success=True,
         logs="ok\n",
     )
+
+
+def unmarked(output: ProgramOutput) -> ProgramOutput:
+    """The output without the mark of the store it was read from."""
+    execution = output.execution.model_copy(update={"store_run": None})
+    return output.model_copy(update={"execution": execution})
