@@ -31,9 +31,9 @@ alone. Each run also keeps the *numerics identity* of every program that produce
 so results of different code stay apart while the key stays the same across releases.
 The runner sets the identities on every output it returns, `execution.identities`: it
 asks each program for a string that changes whenever its results may change, and `put`
-stores them with the run. For a Python library that is its name and
-version (`{"tblite": "tblite 0.8.0"}`); for an external executable, the sha256 of the
-file (`{"xtb": "sha256:9c1f…"}`); for a program with numerics epochs, the epoch.
+stores them with the run. For a Python library that is its version
+(`{"tblite": "0.8.0"}`); for an external executable, its version and the sha256 of the
+file (`{"xtb": "6.7.1 sha256:9c1f…"}`); for a program with numerics epochs, the epoch.
 `qccompute.Runner().identities(inp)` shows them for an input.
 
 ```python
@@ -54,16 +54,16 @@ output = ProgramOutput(
     results=SinglePointData(
         provenance={"program": "tblite", "program_version": "0.8.0"}, energy=-5.07
     ),
-    execution={"identities": {"tblite": "tblite 0.8.0"}},  # what the runner sets
+    execution={"identities": {"tblite": "0.8.0"}},  # what the runner sets
 )
 
 store = Store("./store")
 run = store.put(output, tags=["demo"], meta={"by": "readme"})
 
 key = store.key(inp)
-tblite = {"tblite": "tblite 0.8.0"}
+tblite = {"tblite": "0.8.0"}
 store.get(key, tblite)             # only a run of tblite 0.8.0
-store.get(key, {"tblite": "tblite 0.9.0"})   # None: never run with 0.9.0
+store.get(key, {"tblite": "0.9.0"}) # None: never run with 0.9.0
 store.get(key)                     # the latest run, whatever code made it...
 store.get(key).execution.identities  # ...and which code that was
 store.blob(key, "logs")            # b"SCF converged in 9 iterations\n"
@@ -80,7 +80,7 @@ new identities, with the evidence. The evidence is stored once, however many run
 covers, and asserts that each run's whole output is what the new code would produce.
 
 ```python
-newer = {"tblite": "tblite 0.9.0"}
+newer = {"tblite": "0.9.0"}
 store.carry([(key, run)], newer, {"benchmark": "S22", "max_abs_diff": 0.0})
 store.get(key, newer)              # the 0.8.0 run, valid for 0.9.0 too
 ```

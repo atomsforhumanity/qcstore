@@ -3,7 +3,7 @@
 A calculation is named by its key, ``qcdata.calculation_key(inp)``: the input alone.
 Each time it runs, `Store.put` adds a run, which is never changed or deleted afterwards.
 A run keeps the numerics identities of the programs that produced it, which the runner
-sets on the output (``execution.identities``, such as ``{"tblite": "tblite 0.8.0"}``),
+sets on the output (``execution.identities``, such as ``{"tblite": "0.8.0"}``),
 so readers can tell results of different code apart while the key stays the same across
 releases.
 
@@ -178,7 +178,7 @@ class Store:
         ```python
         store = Store("./store")
         run = store.put(output, tags=["screen"])  # output.execution.identities
-        store.get(store.key(inp), {"tblite": "tblite 0.8.0"})
+        store.get(store.key(inp), {"tblite": "0.8.0"})
         ```
 
     Attributes:

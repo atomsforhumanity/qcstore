@@ -15,15 +15,16 @@ A stored result answers two questions, kept apart:
   input names, `{program: numerics}`: a string that changes whenever results for an
   unchanged input may change. qccompute's runner asks each program and sets the
   result on every output it returns, `execution.identities`; `put` files the run
-  under them and stores them with the output, and refuses an output without them. A Python library's is its name and
-  version (`{"tblite": "tblite 0.8.0"}`), an external executable's the sha256 of the
-  file (`{"xtb": "sha256:9c1f…"}`), a program with numerics epochs its epoch, an ML
-  potential its model's checksum. qcstore only compares them as strings.
+  under them and stores them with the output, and refuses an output without them. A
+  Python library's is its version (`{"tblite": "0.8.0"}`), an external executable's its
+  version and the sha256 of the file (`{"xtb": "6.7.1 sha256:9c1f…"}`), a program with
+  numerics epochs its epoch, an ML potential its library's version and its model file's
+  sha256. qcstore only compares them as strings.
 
 A reader asks for a calculation and, optionally, for identities. `get(key)` returns the
 latest run (the latest success, else the latest failure) *whatever code made it*: the
 returned output's `execution.identities` says which.
-`get(key, {"tblite": "tblite 0.9.0"})` returns only a run produced by exactly those
+`get(key, {"tblite": "0.9.0"})` returns only a run produced by exactly those
 identities, or *carried* to them: marked valid for them, with the evidence, after a
 release that changed no results for it. A carried run keeps the identities that
 produced it. `runs()`, the pointer and the index all read a run's identities from the
@@ -71,7 +72,7 @@ directories sort by time.
   },
   "output": {
     "success": true, "input_data": {...}, "results": {...},
-    "execution": {"identities": {"tblite": "tblite 0.8.0"}, ...}, ...
+    "execution": {"identities": {"tblite": "0.8.0"}, ...}, ...
   }
 }
 ```
@@ -99,8 +100,8 @@ set:
 {
   "preferred": "20261117T101500.123456Z-7c1e9a0b",
   "by_identities": [
-    {"identities": {"tblite": "tblite 0.8.0"}, "preferred": "20261117T101500.123456Z-7c1e9a0b"},
-    {"identities": {"tblite": "tblite 0.9.0"}, "preferred": "20261118T090000.000000Z-0b1c2d3e"}
+    {"identities": {"tblite": "0.8.0"}, "preferred": "20261117T101500.123456Z-7c1e9a0b"},
+    {"identities": {"tblite": "0.9.0"}, "preferred": "20261118T090000.000000Z-0b1c2d3e"}
   ]
 }
 ```
