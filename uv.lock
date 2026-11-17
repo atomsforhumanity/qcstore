@@ -1499,7 +1499,7 @@ wheels = [
 
 [[package]]
 name = "qcdata"
-version = "0.24.0a1"
+version = "0.24.0a2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "eval-type-backport" },
@@ -1511,9 +1511,9 @@ dependencies = [
     { name = "toml" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/91/62/e312b0fb9765abb2e15f2ecfc1980b98e91955a9266d12f519f1eb354c6b/qcdata-0.24.0a1.tar.gz", hash = "sha256:41a1f36353407cfc3fe7e9250460561cf98900ff69ff3f7177a4d35775be21b7", size = 1448562, upload-time = "2026-11-17T01:17:53.879Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1a/fd/28a0ea8d1e1a3a05b8e9735e495437ec58456cf4a9de4899a590015e6152/qcdata-0.24.0a2.tar.gz", hash = "sha256:f26c87d2690a1b553b4e284fc5145cea7e9930fa6848e161092aa82a28243059", size = 1449900, upload-time = "2026-11-17T01:50:06.1Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/b6/2caa1268e9a38c0ff9c7b9d556349decd3a5b55c785ac1a6cd91782bc808/qcdata-0.24.0a1-py3-none-any.whl", hash = "sha256:8b7491d1d3edf8e945b712f7679c17470aafcdfb74a5d2511fbb2bd667c000f6", size = 73768, upload-time = "2026-11-17T01:17:52.24Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/34/fb1c12395e5e1409614e1941068f21c84cfec1aa97afc96f97ea7eb1a436/qcdata-0.24.0a2-py3-none-any.whl", hash = "sha256:c789db47ae0936b83932becc14cebd6c4675a29c89839483516e2c3f82f5bebd", size = 74583, upload-time = "2026-11-17T01:50:04.641Z" },
 ]
 
 [[package]]
@@ -1552,7 +1552,7 @@ docs = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "qcdata", specifier = ">=0.24.0a1" }]
+requires-dist = [{ name = "qcdata", specifier = ">=0.24.0a2" }]
 
 [package.metadata.requires-dev]
 dev = [

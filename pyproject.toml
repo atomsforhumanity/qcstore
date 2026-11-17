@@ -7,7 +7,7 @@ authors = [{ name = "Colton Hicks", email = "github@coltonhicks.com" }]
 license = { file = "LICENSE" }
 requires-python = ">=3.11"
 keywords = ["quantum-chemistry", "cache", "provenance", "data-store"]
-dependencies = ["qcdata>=0.24.0a1"]
+dependencies = ["qcdata>=0.24.0a2"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
