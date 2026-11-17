@@ -218,9 +218,14 @@ class Store:
         return _calculation_key(inp)
 
     def get(
-        self, key: str, identities: Identities | None = None, *, blobs: bool = True
+        self,
+        key: str,
+        identities: Identities | None = None,
+        *,
+        run: str | None = None,
+        blobs: bool = True,
     ) -> Output | None:
-        """Return the preferred run's output, or None if there is none.
+        """Return the preferred run's output, or one named run's; None if there is none.
 
         The preferred run is the latest success not withdrawn, else the latest run not
         withdrawn. Without ``identities`` that is the latest run whatever code made
@@ -228,18 +233,36 @@ class Store:
         ``identities``, only runs produced by exactly those identities, or carried to
         them, count. A carried run keeps the identities that produced it.
 
+        With ``run``, that run is returned whether it is preferred or not, withdrawn
+        or not: a citation of a run (an output's ``execution.store_run``) reads back
+        exactly what was cited. `runs` says whether it was withdrawn.
+
         Args:
             key: The calculation's key.
             identities: The numerics identity of each program the input names, as the
                 caller would run them now; None for any.
+            run: A run of the key: its id, or ``"<key>/<run>"`` as in
+                ``execution.store_run``. Not with ``identities``.
             blobs: Load logs and files. False leaves them out (``logs`` None, ``files``
                 empty) and reads only the record and its arrays.
 
         Returns:
             The output as stored, with ``execution.store_run`` set to ``"<key>/<run>"``:
-            where it was read from. None if there is none.
+            where it was read from. None if there is none (or no such run).
+
+        Raises:
+            ValueError: ``key`` is not a key; ``run`` is not a run id, or names
+                another key; or both ``run`` and ``identities`` are given.
         """
-        run = self._preferred(_check_key(key), identities)
+        _check_key(key)
+        if run is None:
+            run = self._preferred(key, identities)
+        else:
+            if identities is not None:
+                raise ValueError("Pass identities or a run, not both.")
+            run = _check_run(key, run)
+            if not self.backend.exists(f"{_run_dir(key, run)}/record.json"):
+                return None
         return None if run is None else self._load(key, run, blobs)
 
     def put(
@@ -953,6 +976,21 @@ def _check_key(key: str) -> str:
     if not isinstance(key, str) or not _KEY.fullmatch(key):
         raise ValueError(f"Not a calculation key: {key!r}.")
     return key
+
+
+def _check_run(key: str, run: str) -> str:
+    """A run id from ``<run>`` or ``<key>/<run>`` (an ``execution.store_run``)."""
+    head, cited, run_id = run.partition("/") if isinstance(run, str) else ("", "", "")
+    if not cited:
+        run_id = head
+    elif head != key and _KEY.fullmatch(head):
+        raise ValueError(f"{run!r} is a run of {head}, not of {key}.")
+    if (cited and head != key) or not _RUN.fullmatch(run_id):
+        raise ValueError(
+            f"Not a run id: {run!r}; a run is '<id>' or '<key>/<id>', as in "
+            "execution.store_run."
+        )
+    return run_id
 
 
 def _check_tags(tags: Iterable[str]) -> list[str]:

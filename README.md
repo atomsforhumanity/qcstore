@@ -100,9 +100,18 @@ index.sql(
 
 With [qccompute](https://github.com/atomsforhumanity/qccompute), a store caches
 calculations: `qccompute.compute(inp, store=store)` returns a stored result when one
-from the same code exists, and stores what it runs. A stored result says so:
-`execution.store_run` names the key and run it was read from, and is None on a fresh
-run.
+from the same code exists, and stores what it runs. Either way the output names its
+run, `execution.store_run`, so a result can be cited exactly and read back later, even
+after a newer run of the same calculation has become the preferred one:
+
+```python
+out = qccompute.compute(inp, store=store)
+cited = out.execution.store_run    # "k1:35a1.../20261117T..."
+store.get(key, run=cited)          # that run, preferred or not, withdrawn or not
+```
+
+Two processes that miss the same key at once each compute it, and the store keeps
+both runs: duplicate work, never a wrong result.
 
 ## On disk
 

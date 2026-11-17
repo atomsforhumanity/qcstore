@@ -140,6 +140,12 @@ filesystems and on NFS.
   writer reads the runs, computes the pointer, replaces `current.json`, then reads the
   runs again and repeats until the pointer it wrote matches them.
 
+**Concurrent misses of one key each compute.** The store makes no claims on a key
+before a run exists: two processes that look up the same key at once both miss, both
+compute, and the store keeps both runs (the later success is preferred). That costs
+duplicate work, never a wrong result. A claim marker for work in flight may come later,
+with a cluster backend where duplicate work is expensive.
+
 Why the pointer ends right: consider the last replacement of `current.json`, by writer
 W. After it, W read the runs once more and found its pointer still correct. Any change
 completed after that reading would have been followed by its own writer's replacement,
@@ -151,8 +157,16 @@ the pointer is right. Two writers that read the same runs write the same bytes.
 `get(key, identities)` reads `current.json`, then that run's `record.json`, its arrays
 and (unless `blobs=False`) its logs and files. The output it returns says where it was
 read from: `execution.store_run` is `"<key>/<run>"`. `put` removes that field, at any
-depth (a frame made from a stored output carries it too), so it is never stored. `blob(key, path)` reads one blob alone.
-`runs(key)` reads every complete run with its markers.
+depth (a frame made from a stored output carries it too), so it is never stored.
+qccompute's runner sets it on an output it has just stored, too, so every output a
+runner returns with a store names its run.
+
+A network or a report that quotes numbers cites the run they came from, `(key, run)` or
+the `store_run` string, and reads it back with `get(key, run=...)`: that run's output,
+whether it is preferred or not, withdrawn or not (`runs(key)` says which). "The result
+under the current code" stays `get(key, identities)`, and "every result" `runs(key)`.
+`blob(key, path)` reads one blob alone. `runs(key)` reads every complete run with its
+markers.
 
 A pointer can lag behind the runs when a writer is killed between changing them and
 replacing it (see below). A run it names is always complete, so a lagging pointer can

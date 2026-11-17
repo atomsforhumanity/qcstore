@@ -212,6 +212,42 @@ def test_withdrawn_runs_are_never_preferred(store):
     assert len(store.runs(key)) == 2
 
 
+def test_get_returns_a_named_run_preferred_or_not(store):
+    key = store.key(outputs.energy_input())
+    first = store.put(ran(outputs.energy(), XTB))
+    second = store.put(ran(outputs.energy(), {"xtb": "6.8.0"}))
+    third = store.put(ran(outputs.energy(success=False), XTB))
+    assert store.get(key).execution.store_run == f"{key}/{second}"
+    # A citation reads back exactly what was cited, by id or as store_run.
+    cited = store.get(key, run=first)
+    assert cited.execution.store_run == f"{key}/{first}"
+    assert cited.execution.identities == XTB
+    assert unmarked(store.get(key, run=f"{key}/{first}")) == unmarked(cited)
+    assert not store.get(key, run=third).success
+    assert store.get(key, run=third, blobs=False).logs is None
+    # A withdrawn run is still returned by name, marked as get marks it.
+    store.withdraw(key, first, "wrong charge")
+    withdrawn = store.get(key, run=first)
+    assert withdrawn.execution.store_run == f"{key}/{first}"
+    assert unmarked(withdrawn) == unmarked(cited)
+    # No such run of a key is None, like a key with no runs.
+    assert store.get(key, run="20260101T000000.000000Z-00000000") is None
+
+
+def test_named_runs_are_checked(store):
+    key = store.key(outputs.energy_input())
+    other = store.key(outputs.energy_input(1))
+    run = store.put(ran(outputs.energy(), XTB))
+    with pytest.raises(ValueError, match="not both"):
+        store.get(key, XTB, run=run)
+    with pytest.raises(ValueError, match="Not a run id"):
+        store.get(key, run="latest")
+    with pytest.raises(ValueError, match="Not a run id"):
+        store.get(key, run=f"{key}/../{run}")
+    with pytest.raises(ValueError, match="not of"):
+        store.get(key, run=f"{other}/{run}")
+
+
 def test_withdraw_needs_a_complete_run(store):
     store.put(ran(outputs.energy(), XTB))
     key = store.key(outputs.energy_input())
