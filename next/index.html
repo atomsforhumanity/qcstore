@@ -1,0 +1,877 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="Colton Hicks">
+      
+      
+        <link rel="canonical" href="https://qcstore.docs.afh.org/next/">
+      
+      
+      
+        <link rel="next" href="design/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>qcstore</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#qcstore" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+            Pre-release documentation for the next version (alpha). The stable docs are at the
+    <a href="https://qcstore.docs.afh.org/">site root</a>.
+          </div>
+          
+        </aside>
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="qcstore" class="md-header__button md-logo" aria-label="qcstore" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            qcstore
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/atomsforhumanity/qcstore" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="qcstore" class="md-nav__button md-logo" aria-label="qcstore" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    qcstore
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/atomsforhumanity/qcstore" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#five-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Five minutes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on-disk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On disk
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/sqlite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/verify/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verify
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backends
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/atomsforhumanity/qcstore/blob/next/CHANGELOG.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#five-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Five minutes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on-disk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On disk
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="qcstore">qcstore<a class="headerlink" href="#qcstore" title="Permanent link">&para;</a></h1>
+<p>A store for quantum chemistry results. Every run of every calculation is kept as plain
+JSON you can read with <code>cat</code> and <code>jq</code>, filed under the calculation's key, and nothing is
+ever overwritten or deleted. Many processes can write to one store at once, on a local
+disk or NFS, without locks, and a writer killed mid-write leaves nothing a reader trusts.</p>
+<p>qcstore depends only on <a href="https://github.com/atomsforhumanity/qcdata">qcdata</a> and the
+Python standard library.</p>
+<h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
+<p>qcstore is in alpha. Install it pinned with qcdata (<code>--prerelease=allow</code> lets the
+resolver take pre-releases):</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--prerelease<span class="o">=</span>allow<span class="w"> </span><span class="s2">"qcdata==0.24.0a6"</span><span class="w"> </span><span class="s2">"qcstore==0.1.0a4"</span>
+</code></pre></div>
+<p>To cache calculations that qccompute runs, as at the end of the next section, add the
+runner and its external programs:</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--prerelease<span class="o">=</span>allow<span class="w"> </span><span class="s2">"qcdata==0.24.0a6"</span><span class="w"> </span><span class="s2">"qccompute[qccodec]==0.23.0a5"</span><span class="w"> </span><span class="s2">"qccodec==0.22.0a4"</span><span class="w"> </span><span class="s2">"qcstore==0.1.0a4"</span>
+</code></pre></div>
+<h2 id="five-minutes">Five minutes<a class="headerlink" href="#five-minutes" title="Permanent link">&para;</a></h2>
+<p>A store files each calculation under its key, <code>qcdata.calculation_key(inp)</code>: the input
+alone. Each run also keeps the <em>numerics identity</em> of every program that produced it,
+so results of different code stay apart while the key stays the same across releases.
+The runner sets the identities on every output it returns, <code>execution.identities</code>: it
+asks each program for a string that changes whenever its results may change, and <code>put</code>
+stores them with the run. For a Python library that is its version
+(<code>{"tblite": "0.8.0"}</code>); for an external executable, its version and the sha256 of the
+file (<code>{"xtb": "6.7.1 sha256:9c1f…"}</code>); for a program with numerics epochs, the epoch.
+<code>qccompute.Runner().identities(inp)</code> shows them for an input.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">qcdata</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProgramInput</span><span class="p">,</span> <span class="n">ProgramOutput</span><span class="p">,</span> <span class="n">SinglePointData</span><span class="p">,</span> <span class="n">Structure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qcstore</span><span class="w"> </span><span class="kn">import</span> <span class="n">Store</span>
+
+<span class="n">water</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span>
+    <span class="n">symbols</span><span class="o">=</span><span class="p">[</span><span class="s2">"O"</span><span class="p">,</span> <span class="s2">"H"</span><span class="p">,</span> <span class="s2">"H"</span><span class="p">],</span>
+    <span class="n">geometry</span><span class="o">=</span><span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.43</span><span class="p">,</span> <span class="mf">1.11</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.43</span><span class="p">,</span> <span class="mf">1.11</span><span class="p">]],</span>  <span class="c1"># bohr</span>
+<span class="p">)</span>
+<span class="n">inp</span> <span class="o">=</span> <span class="n">ProgramInput</span><span class="p">(</span>
+    <span class="n">program</span><span class="o">=</span><span class="s2">"tblite"</span><span class="p">,</span> <span class="n">calctype</span><span class="o">=</span><span class="s2">"energy"</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">water</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="p">{</span><span class="s2">"method"</span><span class="p">:</span> <span class="s2">"GFN2-xTB"</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">ProgramOutput</span><span class="p">(</span>
+    <span class="n">input_data</span><span class="o">=</span><span class="n">inp</span><span class="p">,</span>
+    <span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">logs</span><span class="o">=</span><span class="s2">"SCF converged in 9 iterations</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
+    <span class="n">results</span><span class="o">=</span><span class="n">SinglePointData</span><span class="p">(</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="p">{</span><span class="s2">"program"</span><span class="p">:</span> <span class="s2">"tblite"</span><span class="p">,</span> <span class="s2">"program_version"</span><span class="p">:</span> <span class="s2">"0.8.0"</span><span class="p">},</span> <span class="n">energy</span><span class="o">=-</span><span class="mf">5.07</span>
+    <span class="p">),</span>
+    <span class="n">execution</span><span class="o">=</span><span class="p">{</span><span class="s2">"identities"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"tblite"</span><span class="p">:</span> <span class="s2">"0.8.0"</span><span class="p">}},</span>  <span class="c1"># what the runner sets</span>
+<span class="p">)</span>
+
+<span class="n">store</span> <span class="o">=</span> <span class="n">Store</span><span class="p">(</span><span class="s2">"./store"</span><span class="p">)</span>
+<span class="n">run</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"demo"</span><span class="p">],</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s2">"by"</span><span class="p">:</span> <span class="s2">"readme"</span><span class="p">})</span>
+
+<span class="n">key</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+<span class="n">tblite</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"tblite"</span><span class="p">:</span> <span class="s2">"0.8.0"</span><span class="p">}</span>
+<span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">tblite</span><span class="p">)</span>             <span class="c1"># only a run of tblite 0.8.0</span>
+<span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">{</span><span class="s2">"tblite"</span><span class="p">:</span> <span class="s2">"0.9.0"</span><span class="p">})</span> <span class="c1"># None: never run with 0.9.0</span>
+<span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>                     <span class="c1"># the latest run, whatever code made it...</span>
+<span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">identities</span>  <span class="c1"># ...and which code that was</span>
+<span class="n">store</span><span class="o">.</span><span class="n">blob</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">"logs"</span><span class="p">)</span>            <span class="c1"># b"SCF converged in 9 iterations\n"</span>
+<span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">store_run</span> <span class="c1"># "k1:35a1.../20261117T...": read from this store</span>
+</code></pre></div>
+<p><code>get(key)</code> without identities returns the latest run (the latest success, else the
+latest failure) whatever code made it, so two builds of one program can both be behind
+a key. Ask with identities, <code>get(key, identities)</code>, to get a run of that code, or read
+the returned output's <code>execution.identities</code> to see which code you got.</p>
+<p>A new release that gives the same results need not rerun anything: carry the runs to the
+new identities, with the evidence. The evidence is stored once, however many runs it
+covers, and asserts that each run's whole output is what the new code would produce.</p>
+<div class="highlight"><pre><span></span><code><span class="n">newer</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"tblite"</span><span class="p">:</span> <span class="s2">"0.9.0"</span><span class="p">}</span>
+<span class="n">store</span><span class="o">.</span><span class="n">carry</span><span class="p">([(</span><span class="n">key</span><span class="p">,</span> <span class="n">run</span><span class="p">)],</span> <span class="n">newer</span><span class="p">,</span> <span class="p">{</span><span class="s2">"benchmark"</span><span class="p">:</span> <span class="s2">"S22"</span><span class="p">,</span> <span class="s2">"max_abs_diff"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
+<span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">newer</span><span class="p">)</span>              <span class="c1"># the 0.8.0 run, valid for 0.9.0 too</span>
+</code></pre></div>
+<p>A wrong result is withdrawn, not deleted:</p>
+<div class="highlight"><pre><span></span><code><span class="n">store</span><span class="o">.</span><span class="n">withdraw</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="s2">"wrong geometry"</span><span class="p">)</span>
+<span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>                     <span class="c1"># None: no other run</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">store</span><span class="o">.</span><span class="n">runs</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">success</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">identities</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">withdrawn</span><span class="o">.</span><span class="n">reason</span><span class="p">)</span>
+</code></pre></div>
+<p>Questions across calculations go to an optional SQLite index, kept up to date from the
+store's journals:</p>
+<div class="highlight"><pre><span></span><code><span class="n">index</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">index</span><span class="p">()</span>
+<span class="n">index</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">"demo"</span><span class="p">,</span> <span class="n">program</span><span class="o">=</span><span class="s2">"tblite"</span><span class="p">)</span>
+<span class="n">index</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">identities</span><span class="o">=</span><span class="n">newer</span><span class="p">)</span>      <span class="c1"># every run valid under tblite 0.9.0</span>
+<span class="n">index</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span>
+    <span class="s2">"SELECT formula, COUNT(DISTINCT key) AS calculations FROM runs GROUP BY formula"</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>With <a href="https://github.com/atomsforhumanity/qccompute">qccompute</a>, a store caches
+calculations: <code>qccompute.compute(inp, store=store)</code> returns a stored result when one
+from the same code exists, and stores what it runs. Either way the output names its
+run, <code>execution.store_run</code>, so a result can be cited exactly and read back later, even
+after a newer run of the same calculation has become the preferred one:</p>
+<div class="highlight"><pre><span></span><code><span class="n">out</span> <span class="o">=</span> <span class="n">qccompute</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="n">store</span><span class="p">)</span>
+<span class="n">cited</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">store_run</span>    <span class="c1"># "k1:35a1.../20261117T..."</span>
+<span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">run</span><span class="o">=</span><span class="n">cited</span><span class="p">)</span>          <span class="c1"># that run, preferred or not, withdrawn or not</span>
+</code></pre></div>
+<p>Two processes that miss the same key at once each compute it, and the store keeps
+both runs: duplicate work, never a wrong result.</p>
+<h2 id="on-disk">On disk<a class="headerlink" href="#on-disk" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>store/
+  records/k1/3f/3f9a.../               one directory per calculation, k1:3f9a...
+    current.json                       the preferred run, overall and per identity set
+    tags/demo                          an empty file per tag
+    20261117T101500.123456Z-7c1e9a0b/  one directory per run, never changed
+      record.json                      meta and the output, identities included
+      blobs/output.logs                logs, files and large arrays, named by JSON path
+      carries/9c1f...                  an empty marker per carry of this run
+      withdrawn.json                   who withdrew it, when, and why
+  carries/9c1f....json                 a carry: "also valid for tblite 0.9.0", the evidence
+  journals/&lt;writer&gt;/&lt;batch&gt;.jsonl      what each writer changed, for the index
+  index.sqlite                         the optional index, rebuildable at any time
+</code></pre></div>
+<p><code>python -m qcstore verify ./store</code> checks every record: keys, blob digests, pointers.</p>
+<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
+<p><a href="https://qcstore.docs.afh.org/next/">qcstore.docs.afh.org/next</a> documents the alpha: the
+API, and the <a href="https://qcstore.docs.afh.org/next/design/">design</a>: the layout, how writers
+agree without locks, and what a crash can and cannot leave behind. Until qcstore's first
+final release, the site root shows the same pages.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy", "navigation.sections", "navigation.top", "search.suggest", "toc.follow"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
