@@ -2,26 +2,26 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://qcstore.docs.afh.org/next/</loc>
-         <lastmod>2026-11-17</lastmod>
+         <lastmod>2026-11-19</lastmod>
     </url>
     <url>
          <loc>https://qcstore.docs.afh.org/next/design/</loc>
-         <lastmod>2026-11-17</lastmod>
+         <lastmod>2026-11-19</lastmod>
     </url>
     <url>
          <loc>https://qcstore.docs.afh.org/next/api/backends/</loc>
-         <lastmod>2026-11-17</lastmod>
+         <lastmod>2026-11-19</lastmod>
     </url>
     <url>
          <loc>https://qcstore.docs.afh.org/next/api/sqlite/</loc>
-         <lastmod>2026-11-17</lastmod>
+         <lastmod>2026-11-19</lastmod>
     </url>
     <url>
          <loc>https://qcstore.docs.afh.org/next/api/store/</loc>
-         <lastmod>2026-11-17</lastmod>
+         <lastmod>2026-11-19</lastmod>
     </url>
     <url>
          <loc>https://qcstore.docs.afh.org/next/api/verify/</loc>
-         <lastmod>2026-11-17</lastmod>
+         <lastmod>2026-11-19</lastmod>
     </url>
 </urlset>
