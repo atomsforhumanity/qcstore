@@ -76,4 +76,4 @@ nav:
       - Index: api/sqlite.md
       - Verify: api/verify.md
       - Backends: api/backends.md
-  - Changelog: https://github.com/atomsforhumanity/qcstore/blob/next/CHANGELOG.md
+  - Changelog: https://github.com/atomsforhumanity/qcstore/blob/main/CHANGELOG.md

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [unreleased]
 
+## [0.1.0] - 2026-11-19
+
+The first final release: the 0.1.0 alphas' entries below make up its changes. Since 0.1.0a4:
+
+### Changed
+
+- Requires qcdata 0.24.0 or later; the README's install lines and links point at the final releases.
+
 ## [0.1.0a4] - 2026-11-17
 
 ### Added
