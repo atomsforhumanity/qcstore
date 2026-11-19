@@ -578,7 +578,7 @@
   
   
     <li class="md-nav__item">
-      <a href="https://github.com/atomsforhumanity/qcstore/blob/next/CHANGELOG.md" class="md-nav__link">
+      <a href="https://github.com/atomsforhumanity/qcstore/blob/main/CHANGELOG.md" class="md-nav__link">
         
   
   
@@ -696,13 +696,11 @@ disk or NFS, without locks, and a writer killed mid-write leaves nothing a reade
 <p>qcstore depends only on <a href="https://github.com/atomsforhumanity/qcdata">qcdata</a> and the
 Python standard library.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
-<p>qcstore is in alpha. Install it with qcdata, with minimum versions (<code>--prerelease=allow</code> lets the
-resolver take pre-releases):</p>
-<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--prerelease<span class="o">=</span>allow<span class="w"> </span><span class="s2">"qcdata&gt;=0.24.0a8"</span><span class="w"> </span><span class="s2">"qcstore&gt;=0.1.0a4"</span>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>qcstore
 </code></pre></div>
-<p>To cache calculations that qccompute runs, as at the end of the next section, add the
-runner and its external programs:</p>
-<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--prerelease<span class="o">=</span>allow<span class="w"> </span><span class="s2">"qcdata&gt;=0.24.0a8"</span><span class="w"> </span><span class="s2">"qccompute[qccodec]&gt;=0.23.0a6"</span><span class="w"> </span><span class="s2">"qccodec&gt;=0.22.0a5"</span><span class="w"> </span><span class="s2">"qcstore&gt;=0.1.0a4"</span>
+<p>installs it with qcdata. To cache calculations that qccompute runs, as at the end of the next
+section, add the runner and its external programs:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>qcstore<span class="w"> </span><span class="s2">"qccompute[qccodec]"</span><span class="w"> </span>qccodec
 </code></pre></div>
 <h2 id="five-minutes">Five minutes<a class="headerlink" href="#five-minutes" title="Permanent link">&para;</a></h2>
 <p>A store files each calculation under its key, <code>qcdata.calculation_key(inp)</code>: the input
@@ -799,10 +797,9 @@ both runs: duplicate work, never a wrong result.</p>
 </code></pre></div>
 <p><code>python -m qcstore verify ./store</code> checks every record: keys, blob digests, pointers.</p>
 <h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
-<p><a href="https://qcstore.docs.afh.org/next/">qcstore.docs.afh.org/next</a> documents the alpha: the
-API, and the <a href="https://qcstore.docs.afh.org/next/design/">design</a>: the layout, how writers
-agree without locks, and what a crash can and cannot leave behind. Until qcstore's first
-final release, the site root shows the same pages.</p>
+<p><a href="https://qcstore.docs.afh.org/">qcstore.docs.afh.org</a> documents the API, and the
+<a href="https://qcstore.docs.afh.org/design/">design</a>: the layout, how writers agree without locks,
+and what a crash can and cannot leave behind.</p>
 
 
 
